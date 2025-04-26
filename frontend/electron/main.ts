@@ -163,9 +163,23 @@ const handleCapture = async () => {
         
         try {
           const formData = new FormData();
-          formData.append('prompt', 'the file button');
-          formData.append('file', new Blob([entireScreen.thumbnail.toPNG()], { type: 'image/png' }), 'screenshot.png');
+          formData.append('prompt', 'click the title at the top of the screen');
+          const screenshotBlob = new Blob([entireScreen.thumbnail.toPNG()], { type: 'image/png' });
+          formData.append('file', screenshotBlob, 'screenshot.png');
 
+          // Save the screenshot to disk for debugging
+          const fs = await import('fs');
+          const os = await import('os');
+          const path = await import('path');
+          const debugDir = path.join(os.tmpdir(), 'screenshot-debug');
+          if (!fs.existsSync(debugDir)) {
+            fs.mkdirSync(debugDir, { recursive: true });
+          }
+          const debugFilePath = path.join(debugDir, `screenshot-${Date.now()}.png`);
+          const arrayBuffer = await screenshotBlob.arrayBuffer();
+          fs.writeFileSync(debugFilePath, Buffer.from(arrayBuffer));
+          console.log('Screenshot saved for debugging at:', debugFilePath);
+ // debug end
           const response = await fetch('http://localhost:8000/screen', {
             method: 'POST',
             body: formData
@@ -207,15 +221,16 @@ app.whenReady().then(() => {
     if (landingWin){
       landingWin.close()
     }
+    setTimeout(() => {
       // Call handleCapture and get the result
       handleCapture().then(result => {
         if (result && result.success && typeof result.data.x === 'number' && typeof result.data.y === 'number') {
           createGhostWindow(result.data.x, result.data.y);
         } 
       }).catch (err=> {
-      console.error('Error in start-tutorial handler:', err);
-    
-    })
+        console.error('Error in start-tutorial handler:', err);
+      });
+    }, 1000);
     
   });
 
