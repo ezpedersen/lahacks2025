@@ -22,6 +22,12 @@ function createWindow() {
     icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
     frame: false,
     transparent: windowTransparent,
+    // When transparent, don't set backgroundColor (for true transparency)
+    // When not transparent, use black background
+    backgroundColor: windowTransparent ? void 0 : "#000000",
+    hasShadow: false,
+    resizable: false,
+    // alwaysOnTop: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.mjs")
     }
@@ -60,6 +66,12 @@ app.whenReady().then(() => {
         y: 0,
         frame: false,
         transparent: windowTransparent,
+        // When transparent, don't set backgroundColor (for true transparency)
+        // When not transparent, use black background
+        backgroundColor: windowTransparent ? void 0 : "#000000",
+        hasShadow: false,
+        resizable: false,
+        // alwaysOnTop: true,
         webPreferences: {
           preload: path.join(__dirname, "preload.mjs")
         }

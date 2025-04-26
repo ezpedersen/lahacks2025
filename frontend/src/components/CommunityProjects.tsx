@@ -39,16 +39,16 @@ const CommunityProjects: React.FC = () => {
   ];
 
   return (
-    <div className="mt-16 mb-10">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-white text-2xl font-semibold">Trending Tutorials</h2>
+    <div className="mt-6 mb-4 h-full overflow-hidden">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-white text-xl font-semibold">Trending Tutorials</h2>
         <button className="text-gray-300 hover:text-white flex items-center text-sm">
           View All
           <ChevronRight className="h-4 w-4 ml-1" />
         </button>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 overflow-hidden">
         {projects.map(project => (
           <ProjectCard key={project.id} project={project} />
         ))}

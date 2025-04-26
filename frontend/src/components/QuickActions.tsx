@@ -10,14 +10,14 @@ const QuickActions: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-wrap gap-4 justify-center mt-5 mb-16">
+    <div className="flex flex-wrap gap-3 justify-center mt-4 mb-8">
       {actions.map((action, index) => (
         <button
           key={index}
-          className="flex items-center space-x-2 bg-gray-900/60 hover:bg-gray-800/80 transition-all px-5 py-3 rounded-full text-gray-200"
+          className="flex items-center space-x-2 bg-gray-900/60 hover:bg-gray-800/80 transition-all px-4 py-2 rounded-full text-gray-200 text-sm"
         >
           {action.icon}
-          <span className="text-sm">{action.text}</span>
+          <span>{action.text}</span>
         </button>
       ))}
     </div>
