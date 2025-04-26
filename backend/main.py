@@ -19,3 +19,8 @@ async def screenshot(file: UploadFile = File(...), prompt: str = Form(...)):
     result = json.loads(json_str)
     print(result)  # This will print the actual dictionary
     return result
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
