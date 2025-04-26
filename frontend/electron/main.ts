@@ -51,22 +51,6 @@ function createWindow() {
     },
   })
 
-  // Add this line to enable click-through when window is transparent
-  if (windowTransparent) {
-    win.setIgnoreMouseEvents(true, { forward: true });
-    // Set window level to be above everything
-    win.setAlwaysOnTop(true, 'screen-saver');
-    // Ensure window stays visible
-    win.setVisibleOnAllWorkspaces(true);
-    
-    // Add focus management
-    win.on('blur', () => {
-      if (win) {
-        win.focus();
-        win.setAlwaysOnTop(true, 'screen-saver');
-      }
-    });
-  }
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
@@ -95,77 +79,13 @@ app.on('activate', () => {
 })
 
 app.whenReady().then(() => {
-  ipcMain.handle('toggle-transparency', () => {
-    if (win) {
-      windowTransparent = !windowTransparent;
-      
-      const bounds = win.getBounds();
-      const url = win.webContents.getURL();
-      
-      win.close();
-      win = null;
-      
-      const primaryDisplay = screen.getPrimaryDisplay();
-      const { width, height } = primaryDisplay.bounds;
-      
-      win = new BrowserWindow({
-        width: width,
-        height: height,
-        x: 0,
-        y: 0,
-        frame: false,
-        transparent: windowTransparent,
-        backgroundColor: windowTransparent ? undefined : '#000000',
-        hasShadow: false,
-        resizable: false,
-        alwaysOnTop: true,
-        focusable: true,
-        skipTaskbar: true,
-        webPreferences: {
-          preload: path.join(__dirname, 'preload.mjs'),
-        },
-      });
-      
-      // Add this line to enable/disable click-through based on transparency
-      if (windowTransparent) {
-        win.setIgnoreMouseEvents(true, { forward: true });
-        // Set window level to be above everything
-        win.setAlwaysOnTop(true, 'screen-saver');
-        // Ensure window stays visible
-        win.setVisibleOnAllWorkspaces(true);
-        
-        // // Add focus management
-        // win.on('blur', () => {
-        //   if (win) {
-        //     win.focus();
-        //     win.setAlwaysOnTop(true, 'screen-saver');
-        //   }
-        // });
-      }
-      
-      // Load the same URL
-      if (VITE_DEV_SERVER_URL && url.includes(VITE_DEV_SERVER_URL)) {
-        win.loadURL(VITE_DEV_SERVER_URL)
-      } else {
-        win.loadFile(path.join(RENDERER_DIST, 'index.html'))
-      }
-      
-      return windowTransparent;
-    }
-    return false;
-  })
+  
 
   ipcMain.handle('capture-screen', async () => {
     try {
       console.log('Capturing entire screen...');
       
-      // Create the ElectronSS directory in user's home directory if it doesn't exist
-      // // const homeDir = app.getPath('home');
-      // // const screenshotsDir = path.join(homeDir, 'ElectronSS');
-      
-      // if (!fs.existsSync(screenshotsDir)) {
-      //   fs.mkdirSync(screenshotsDir, { recursive: true });
-      // }
+
       
       // Get the primary display dimensions for capture
       const primaryDisplay = screen.getPrimaryDisplay();
@@ -185,20 +105,7 @@ app.whenReady().then(() => {
       ) || sources[0];
       
       if (entireScreen && entireScreen.thumbnail) {
-        // Generate a timestamp for the filename
-        // const timestamp = new Date().toISOString()
-        //   .replace(/:/g, '-')
-        //   .replace(/\..+/, '')
-        //   .replace('T', '_');
         
-        // Create the filepath
-        // const filePath = path.join(screenshotsDir, `screenshot_${timestamp}.png`);
-        
-        // Save the screenshot as PNG
-        // fs.writeFileSync(filePath, entireScreen.thumbnail.toPNG());
-        
-        // console.log(`Screenshot saved to: ${filePath}`);
-        // Send the PNG buffer to the backend
         try {
           const formData = new FormData();
           formData.append('prompt', 'the file button');
