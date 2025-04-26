@@ -169,6 +169,9 @@ app.whenReady().then(() => {
 
   ipcMain.on('start-tutorial', (_, x: number, y: number) => {
     createGhostWindow(x, y);
+    if (win) {
+      win.close();
+    }
   });
 
   createWindow()
