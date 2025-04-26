@@ -1,10 +1,7 @@
 import { app, BrowserWindow, ipcMain, screen, desktopCapturer } from 'electron'
-import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import fs from 'node:fs'
 
-const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // The built directory structure
@@ -25,8 +22,8 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
-let windowTransparent = false;
 let win: BrowserWindow | null
+let ghostWindow: BrowserWindow | null = null;
 
 function createWindow() {
   const primaryDisplay = screen.getPrimaryDisplay();
@@ -39,8 +36,6 @@ function createWindow() {
     y: 0,
     icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
     frame: false,
-    transparent: windowTransparent,
-    backgroundColor: windowTransparent ? undefined : '#000000',
     hasShadow: false,
     resizable: false,
     // alwaysOnTop: true,
@@ -57,6 +52,35 @@ function createWindow() {
   } else {
     // win.loadFile('dist/index.html')
     win.loadFile(path.join(RENDERER_DIST, 'index.html'))
+  }
+}
+
+function createGhostWindow(x: number, y: number) {
+  if (ghostWindow) {
+    ghostWindow.close();
+  }
+
+  ghostWindow = new BrowserWindow({
+    width: 500,
+    height: 300,
+    x: x,
+    y: y,
+    frame: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    resizable: false,
+    
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.mjs'),
+      nodeIntegration: true,
+      contextIsolation: false
+    }
+  });
+
+  if (VITE_DEV_SERVER_URL) {
+    ghostWindow.loadURL(path.join(VITE_DEV_SERVER_URL, 'ghost'));
+  } else {
+    ghostWindow.loadFile(path.join(RENDERER_DIST, 'index.html'), { hash: '/ghost' });
   }
 }
 
@@ -142,6 +166,10 @@ app.whenReady().then(() => {
       return { success: false, error: error.message || 'Unknown error' };
     }
   })
+
+  ipcMain.on('start-tutorial', (_, x: number, y: number) => {
+    createGhostWindow(x, y);
+  });
 
   createWindow()
 })

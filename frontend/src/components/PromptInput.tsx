@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Paperclip, Plus, Youtube, Eye } from 'lucide-react';
+import { Paperclip, Plus, Youtube, Eye, Play } from 'lucide-react';
 import { useTypingEffect } from '../hooks/useTypingEffect';
 
 interface PromptInputProps {
@@ -52,6 +52,13 @@ const PromptInput: React.FC<PromptInputProps> = ({ prompt, setPrompt }) => {
               <button className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors text-sm">
                 <Youtube className="h-4 w-4" />
                 <span>Import Youtube</span>
+              </button>
+              <button 
+                className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors text-sm"
+                onClick={() => window.ipcRenderer.send('start-tutorial')}
+              >
+                <Play className="h-4 w-4" />
+                <span>Start Tutorial</span>
               </button>
             </div>
             
