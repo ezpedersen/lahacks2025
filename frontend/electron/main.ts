@@ -43,7 +43,7 @@ function createWindow() {
     backgroundColor: windowTransparent ? undefined : '#000000',
     hasShadow: false,
     resizable: false,
-    alwaysOnTop: true,
+    // alwaysOnTop: true,
     focusable: true,
     skipTaskbar: true,
     webPreferences: {
