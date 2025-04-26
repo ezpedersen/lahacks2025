@@ -21,8 +21,8 @@ electron.contextBridge.exposeInMainWorld("ipcRenderer", {
   // ...
 });
 electron.contextBridge.exposeInMainWorld("electron", {
-  toggleTransparency: () => electron.ipcRenderer.invoke("toggle-transparency")
-  // captureScreen: () => ipcRenderer.invoke('capture-screen'),
+  toggleTransparency: () => electron.ipcRenderer.invoke("toggle-transparency"),
+  captureScreen: () => electron.ipcRenderer.invoke("capture-screen")
   // getSummary: () => ipcRenderer.invoke('get-screenshot-summary'),
   // findElement: (query: string) => ipcRenderer.invoke('find-element', query),
 });

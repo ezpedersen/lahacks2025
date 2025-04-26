@@ -10,6 +10,7 @@ declare global {
   interface Window {
     electron: {
       toggleTransparency: () => Promise<boolean>;
+      captureScreen: () => Promise<{ success: boolean, path?: string, error?: string }>;
     }
   }
 }
@@ -36,12 +37,40 @@ function App() {
     }
   };
 
-  // Set up keyboard shortcut listener for CMD + 8
+  // Handle screen capture
+  const handleCaptureScreen = async () => {
+    try {
+      console.log('Capturing screen...');
+      const result = await window.electron.captureScreen();
+      
+      if (result.success) {
+        console.log('Screen captured and saved to:', result.path);
+      } else {
+        console.error('Failed to capture screen:', result.error);
+      }
+    } catch (error) {
+      console.error('Error while capturing screen:', error);
+    }
+  };
+
+  // Set up keyboard shortcut listener
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Check for CMD + 8
       if (event.metaKey && event.key === '8') {
         handleToggleTransparency();
+        event.preventDefault();
+      }
+      
+      // Check for CMD + Shift + 9
+      if (event.metaKey && event.shiftKey && event.key === '9') {
+        handleCaptureScreen();
+        event.preventDefault();
+      }
+      
+      // Check for CMD + 9 for screen capture
+      if (event.metaKey && !event.shiftKey && event.key === '9') {
+        handleCaptureScreen();
         event.preventDefault();
       }
     };

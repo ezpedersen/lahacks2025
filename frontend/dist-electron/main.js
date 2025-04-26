@@ -1,7 +1,8 @@
-import { app, BrowserWindow, ipcMain, screen } from "electron";
+import { app, BrowserWindow, ipcMain, screen, desktopCapturer } from "electron";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import fs from "node:fs";
 createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 process.env.APP_ROOT = path.join(__dirname, "..");
@@ -84,6 +85,38 @@ app.whenReady().then(() => {
       return windowTransparent;
     }
     return false;
+  });
+  ipcMain.handle("capture-screen", async () => {
+    try {
+      console.log("Capturing entire screen...");
+      const homeDir = app.getPath("home");
+      const screenshotsDir = path.join(homeDir, "ElectronSS");
+      if (!fs.existsSync(screenshotsDir)) {
+        fs.mkdirSync(screenshotsDir, { recursive: true });
+      }
+      const primaryDisplay = screen.getPrimaryDisplay();
+      const { width, height } = primaryDisplay.bounds;
+      const sources = await desktopCapturer.getSources({
+        types: ["screen"],
+        thumbnailSize: { width, height }
+      });
+      const entireScreen = sources.find(
+        (source) => source.name === "Entire Screen" || source.name.includes("Screen") || source.id.includes("screen")
+      ) || sources[0];
+      if (entireScreen && entireScreen.thumbnail) {
+        const timestamp = (/* @__PURE__ */ new Date()).toISOString().replace(/:/g, "-").replace(/\..+/, "").replace("T", "_");
+        const filePath = path.join(screenshotsDir, `screenshot_${timestamp}.png`);
+        fs.writeFileSync(filePath, entireScreen.thumbnail.toPNG());
+        console.log(`Screenshot saved to: ${filePath}`);
+        return { success: true, path: filePath };
+      } else {
+        console.error("Failed to capture screen: No sources available");
+        return { success: false, error: "No screen sources available" };
+      }
+    } catch (error) {
+      console.error("Error capturing screen:", error);
+      return { success: false, error: error.message || "Unknown error" };
+    }
   });
   createWindow();
 });
