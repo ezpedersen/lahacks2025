@@ -9,7 +9,6 @@ import QuickActions from './components/QuickActions';
 declare global {
   interface Window {
     electron: {
-      toggleTransparency: () => Promise<boolean>;
       captureScreen: () => Promise<{ success: boolean, path?: string, error?: string }>;
     }
   }
@@ -23,20 +22,6 @@ function App() {
     return saved !== null ? saved === 'true' : false;
   });
   
-  // Handle toggle transparency
-  const handleToggleTransparency = async () => {
-    try {
-      const isTransparent = await window.electron.toggleTransparency();
-      console.log('Window transparency:', isTransparent ? 'transparent' : 'opaque');
-      
-      // Update state and save to localStorage
-      setWindowTransparent(isTransparent);
-      localStorage.setItem('windowTransparent', String(isTransparent));
-    } catch (error) {
-      console.error('Failed to toggle transparency:', error);
-    }
-  };
-
   // Handle screen capture
   const handleCaptureScreen = async () => {
     try {
@@ -56,18 +41,9 @@ function App() {
   // Set up keyboard shortcut listener
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Check for CMD + 8
-      if ((event.metaKey || event.ctrlKey) && event.key === '8') {
-        handleToggleTransparency();
-        event.preventDefault();
-      }
       
-      // Check for CMD + Shift + 9
-      if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key === '9') {
-        handleCaptureScreen();
-        event.preventDefault();
-      }
       
+   
       // Check for CMD + 9 for screen capture
       if ((event.metaKey || event.ctrlKey) && event.key === '9') {
         handleCaptureScreen();
@@ -104,7 +80,6 @@ function App() {
       </div>
       
       <div className="relative z-10 h-full w-full flex flex-col">
-        <Navbar onToggleTransparency={handleToggleTransparency} />
         <main className="flex-1 w-full px-4 py-2 overflow-hidden flex flex-col">
           <div className="mt-24">
             <Hero />

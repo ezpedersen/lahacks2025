@@ -24,7 +24,6 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
 })
 
 contextBridge.exposeInMainWorld('electron', {
-  toggleTransparency: () => ipcRenderer.invoke('toggle-transparency'),
   captureScreen: () => ipcRenderer.invoke('capture-screen'),
   // getSummary: () => ipcRenderer.invoke('get-screenshot-summary'),
   // findElement: (query: string) => ipcRenderer.invoke('find-element', query),

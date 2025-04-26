@@ -1,11 +1,7 @@
-import React from 'react';
 import { Ghost } from 'lucide-react';
 
-interface NavbarProps {
-  onToggleTransparency?: () => Promise<void>;
-}
 
-const Navbar: React.FC<NavbarProps> = ({ onToggleTransparency }) => {
+const Navbar = () => {
   return (
     <nav className="w-full py-3 px-4">
       <div className="flex justify-between items-center">
