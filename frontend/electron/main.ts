@@ -126,12 +126,12 @@ app.whenReady().then(() => {
       console.log('Capturing entire screen...');
       
       // Create the ElectronSS directory in user's home directory if it doesn't exist
-      const homeDir = app.getPath('home');
-      const screenshotsDir = path.join(homeDir, 'ElectronSS');
+      // // const homeDir = app.getPath('home');
+      // // const screenshotsDir = path.join(homeDir, 'ElectronSS');
       
-      if (!fs.existsSync(screenshotsDir)) {
-        fs.mkdirSync(screenshotsDir, { recursive: true });
-      }
+      // if (!fs.existsSync(screenshotsDir)) {
+      //   fs.mkdirSync(screenshotsDir, { recursive: true });
+      // }
       
       // Get the primary display dimensions for capture
       const primaryDisplay = screen.getPrimaryDisplay();
@@ -152,19 +152,39 @@ app.whenReady().then(() => {
       
       if (entireScreen && entireScreen.thumbnail) {
         // Generate a timestamp for the filename
-        const timestamp = new Date().toISOString()
-          .replace(/:/g, '-')
-          .replace(/\..+/, '')
-          .replace('T', '_');
+        // const timestamp = new Date().toISOString()
+        //   .replace(/:/g, '-')
+        //   .replace(/\..+/, '')
+        //   .replace('T', '_');
         
         // Create the filepath
-        const filePath = path.join(screenshotsDir, `screenshot_${timestamp}.png`);
+        // const filePath = path.join(screenshotsDir, `screenshot_${timestamp}.png`);
         
         // Save the screenshot as PNG
-        fs.writeFileSync(filePath, entireScreen.thumbnail.toPNG());
+        // fs.writeFileSync(filePath, entireScreen.thumbnail.toPNG());
         
-        console.log(`Screenshot saved to: ${filePath}`);
-        return { success: true, path: filePath };
+        // console.log(`Screenshot saved to: ${filePath}`);
+        // Send the PNG buffer to the backend
+        try {
+          const formData = new FormData();
+          formData.append('prompt', 'the file button');
+          formData.append('file', new Blob([entireScreen.thumbnail.toPNG()], { type: 'image/png' }), 'screenshot.png');
+
+          const response = await fetch('http://localhost:8000/screen', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data = await response.text();
+          console.log('Screenshot sent to backend successfully');
+          console.log(data);
+        } catch (err) {
+          console.error('Failed to send screenshot to backend:', err);
+        }
+        return { success: true, path: "yes" };
       } else {
         console.error('Failed to capture screen: No sources available');
         return { success: false, error: 'No screen sources available' };

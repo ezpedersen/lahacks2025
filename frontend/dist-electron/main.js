@@ -2,7 +2,6 @@ import { app, BrowserWindow, ipcMain, screen, desktopCapturer } from "electron";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import fs from "node:fs";
 createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 process.env.APP_ROOT = path.join(__dirname, "..");
@@ -89,11 +88,6 @@ app.whenReady().then(() => {
   ipcMain.handle("capture-screen", async () => {
     try {
       console.log("Capturing entire screen...");
-      const homeDir = app.getPath("home");
-      const screenshotsDir = path.join(homeDir, "ElectronSS");
-      if (!fs.existsSync(screenshotsDir)) {
-        fs.mkdirSync(screenshotsDir, { recursive: true });
-      }
       const primaryDisplay = screen.getPrimaryDisplay();
       const { width, height } = primaryDisplay.bounds;
       const sources = await desktopCapturer.getSources({
@@ -104,11 +98,24 @@ app.whenReady().then(() => {
         (source) => source.name === "Entire Screen" || source.name.includes("Screen") || source.id.includes("screen")
       ) || sources[0];
       if (entireScreen && entireScreen.thumbnail) {
-        const timestamp = (/* @__PURE__ */ new Date()).toISOString().replace(/:/g, "-").replace(/\..+/, "").replace("T", "_");
-        const filePath = path.join(screenshotsDir, `screenshot_${timestamp}.png`);
-        fs.writeFileSync(filePath, entireScreen.thumbnail.toPNG());
-        console.log(`Screenshot saved to: ${filePath}`);
-        return { success: true, path: filePath };
+        try {
+          const formData = new FormData();
+          formData.append("prompt", "the file button");
+          formData.append("file", new Blob([entireScreen.thumbnail.toPNG()], { type: "image/png" }), "screenshot.png");
+          const response = await fetch("http://localhost:8000/screen", {
+            method: "POST",
+            body: formData
+          });
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data = await response.text();
+          console.log("Screenshot sent to backend successfully");
+          console.log(data);
+        } catch (err) {
+          console.error("Failed to send screenshot to backend:", err);
+        }
+        return { success: true, path: "yes" };
       } else {
         console.error("Failed to capture screen: No sources available");
         return { success: false, error: "No screen sources available" };

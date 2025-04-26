@@ -57,19 +57,19 @@ function App() {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Check for CMD + 8
-      if (event.metaKey && event.key === '8') {
+      if ((event.metaKey || event.ctrlKey) && event.key === '8') {
         handleToggleTransparency();
         event.preventDefault();
       }
       
       // Check for CMD + Shift + 9
-      if (event.metaKey && event.shiftKey && event.key === '9') {
+      if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key === '9') {
         handleCaptureScreen();
         event.preventDefault();
       }
       
       // Check for CMD + 9 for screen capture
-      if (event.metaKey && !event.shiftKey && event.key === '9') {
+      if ((event.metaKey || event.ctrlKey) && event.key === '9') {
         handleCaptureScreen();
         event.preventDefault();
       }
