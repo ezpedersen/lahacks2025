@@ -134,13 +134,13 @@ app.whenReady().then(() => {
         // Ensure window stays visible
         win.setVisibleOnAllWorkspaces(true);
         
-        // Add focus management
-        win.on('blur', () => {
-          if (win) {
-            win.focus();
-            win.setAlwaysOnTop(true, 'screen-saver');
-          }
-        });
+        // // Add focus management
+        // win.on('blur', () => {
+        //   if (win) {
+        //     win.focus();
+        //     win.setAlwaysOnTop(true, 'screen-saver');
+        //   }
+        // });
       }
       
       // Load the same URL
