@@ -59,7 +59,7 @@ function createGhostWindow(x: number, y: number) {
   if (ghostWindow) {
     ghostWindow.close();
   }
-
+  if (!win){return}
   ghostWindow = new BrowserWindow({
     width: 500,
     height: 300,
@@ -69,7 +69,6 @@ function createGhostWindow(x: number, y: number) {
     alwaysOnTop: true,
     skipTaskbar: true,
     resizable: false,
-    
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       nodeIntegration: true,
@@ -101,11 +100,7 @@ app.on('activate', () => {
     createWindow()
   }
 })
-
-app.whenReady().then(() => {
-  
-
-  ipcMain.handle('capture-screen', async () => {
+const handleCapture = async () => {
     try {
       console.log('Capturing entire screen...');
       
@@ -153,10 +148,11 @@ app.whenReady().then(() => {
           }
           console.log('Screenshot sent to backend successfully');
           console.log(data);
-        } catch (err) {
+          return { success: true, data };
+        } catch (err: any) {
           console.error('Failed to send screenshot to backend:', err);
+          return { success: false, error: err.message || 'Failed to send screenshot to backend' };
         }
-        return { success: true, path: "yes" };
       } else {
         console.error('Failed to capture screen: No sources available');
         return { success: false, error: 'No screen sources available' };
@@ -165,13 +161,27 @@ app.whenReady().then(() => {
       console.error('Error capturing screen:', error);
       return { success: false, error: error.message || 'Unknown error' };
     }
-  })
+  }
+app.whenReady().then(() => {
+  
 
-  ipcMain.on('start-tutorial', (_, x: number, y: number) => {
-    createGhostWindow(x, y);
-    if (win) {
-      win.close();
+  ipcMain.handle('capture-screen', handleCapture)
+
+  ipcMain.on('start-tutorial', () => {
+      // Call handleCapture and get the result
+      handleCapture().then(result => {
+        if (result && result.success && typeof result.data.x === 'number' && typeof result.data.y === 'number') {
+          createGhostWindow(result.data.x, result.data.y);
+        } 
+      }).catch (err=> {
+      console.error('Error in start-tutorial handler:', err);
+    
+    }).then(() => {
+      if (win){
+      win.close()
     }
+    })
+    
   });
 
   createWindow()
