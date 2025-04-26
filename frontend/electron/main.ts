@@ -96,8 +96,8 @@ function createGhostWindow(x: number, y: number) {
   }
   if (!win){return}
   ghostWindow = new BrowserWindow({
-    width: 500,
-    height: 300,
+    width: 50,
+    height: 50,
     x: x,
     y: y,
     frame: false,
@@ -163,7 +163,7 @@ const handleCapture = async () => {
         
         try {
           const formData = new FormData();
-          formData.append('prompt', 'click the title at the top of the screen');
+          formData.append('prompt', 'Click the Help button at the top of the screen');
           const screenshotBlob = new Blob([entireScreen.thumbnail.toPNG()], { type: 'image/png' });
           formData.append('file', screenshotBlob, 'screenshot.png');
 
@@ -171,7 +171,7 @@ const handleCapture = async () => {
           const fs = await import('fs');
           const os = await import('os');
           const path = await import('path');
-          const debugDir = path.join(os.tmpdir(), 'screenshot-debug');
+          const debugDir = path.join(os.homedir(), 'screenshot-debug');
           if (!fs.existsSync(debugDir)) {
             fs.mkdirSync(debugDir, { recursive: true });
           }

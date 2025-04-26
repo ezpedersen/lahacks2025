@@ -20,7 +20,8 @@ def generate(img, checkpoint: str) -> str:
         # location="",
         api_key=GOOGLE_API_KEY,
     )
-
+    prompt = "RETURN JUST THE X AND Y AS ONLY JSON OBJECT; tell me in pixel coordinates from the top left corner of the image where the user should click to fulfill the following requirement: \"" + checkpoint + "\""
+    print(prompt)
     model = "gemini-2.5-flash-preview-04-17"
     contents = [
         types.Content(
@@ -32,7 +33,7 @@ def generate(img, checkpoint: str) -> str:
                     data=img,
                 ),
                 types.Part.from_text(
-                    text="RETURN JUST THE X AND Y AS ONLY JSON OBJECT; tell me in pixel coordinates from the top left corner of the image where the user should click to fulfill: " + checkpoint),
+                    text=prompt),
             ],
         ),
     ]
