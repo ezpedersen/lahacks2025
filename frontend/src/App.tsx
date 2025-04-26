@@ -16,11 +16,6 @@ declare global {
 
 function App() {
   const [prompt, setPrompt] = useState<string>('');
-  const [windowTransparent, setWindowTransparent] = useState<boolean>(() => {
-    // Initialize from localStorage, default to false if not found
-    const saved = localStorage.getItem('windowTransparent');
-    return saved !== null ? saved === 'true' : false;
-  });
   
   // Handle screen capture
   const handleCaptureScreen = async () => {
@@ -60,14 +55,7 @@ function App() {
     };
   }, []);
 
-  // If window should be transparent, return completely empty div with no styling
-  // This is critical for true transparency - any background, even transparent ones can cause issues
-  if (windowTransparent) {
-    // Return empty div - even classNames might add styles that break transparency
-    return null;
-  }
 
-  // Render the main UI only when window is NOT transparent (opaque mode)
   return (
     <div className="h-screen w-screen fixed overflow-hidden">
       {/* Background gradient and effects */}
