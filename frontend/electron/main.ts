@@ -212,7 +212,14 @@ app.whenReady().then(() => {
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
-          const data = await response.text();
+          const text = await response.text();
+          let data;
+          try {
+            data = JSON.parse(text);
+          } catch (e) {
+            console.error('Failed to parse JSON from backend:', e, text);
+            data = null;
+          }
           console.log('Screenshot sent to backend successfully');
           console.log(data);
         } catch (err) {
