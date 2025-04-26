@@ -23,6 +23,7 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
 let win: BrowserWindow | null
+let landingWin: BrowserWindow | null
 let ghostWindow: BrowserWindow | null = null;
 
 function createWindow() {
@@ -39,13 +40,16 @@ function createWindow() {
     hasShadow: false,
     resizable: false,
     // alwaysOnTop: true,
-    focusable: true,
+    transparent: true,
+    focusable: false, // Make window not focusable for clickthrough
     skipTaskbar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
     },
   })
 
+  // Make the window clickthrough (ignore mouse events)
+  win.setIgnoreMouseEvents(true, { forward: true });
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
@@ -54,7 +58,38 @@ function createWindow() {
     win.loadFile(path.join(RENDERER_DIST, 'index.html'))
   }
 }
+function createLanding() {
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width, height } = primaryDisplay.bounds;
 
+  if (!win){
+    return
+  }
+  landingWin = new BrowserWindow({
+    width: width,
+    height: height,
+    x: 0,
+    y: 0,
+    icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
+    frame: false,
+    hasShadow: false,
+    resizable: false,
+    // alwaysOnTop: true,
+    focusable: true,
+    parent: win,
+    skipTaskbar: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.mjs'),
+    },
+  })
+
+
+  if (VITE_DEV_SERVER_URL) {
+    landingWin.loadURL(path.join(VITE_DEV_SERVER_URL, 'landing'));
+  } else {
+    landingWin.loadFile(path.join(RENDERER_DIST, 'index.html'), { hash: '/ghost' });
+  }
+}
 function createGhostWindow(x: number, y: number) {
   if (ghostWindow) {
     ghostWindow.close();
@@ -69,6 +104,7 @@ function createGhostWindow(x: number, y: number) {
     alwaysOnTop: true,
     skipTaskbar: true,
     resizable: false,
+    parent: win,
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       nodeIntegration: true,
@@ -168,6 +204,9 @@ app.whenReady().then(() => {
   ipcMain.handle('capture-screen', handleCapture)
 
   ipcMain.on('start-tutorial', () => {
+    if (landingWin){
+      landingWin.close()
+    }
       // Call handleCapture and get the result
       handleCapture().then(result => {
         if (result && result.success && typeof result.data.x === 'number' && typeof result.data.y === 'number') {
@@ -176,13 +215,10 @@ app.whenReady().then(() => {
       }).catch (err=> {
       console.error('Error in start-tutorial handler:', err);
     
-    }).then(() => {
-      if (win){
-      win.close()
-    }
     })
     
   });
 
   createWindow()
+  createLanding()
 })
