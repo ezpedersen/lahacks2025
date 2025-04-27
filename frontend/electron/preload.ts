@@ -25,6 +25,7 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
 
 contextBridge.exposeInMainWorld('electron', {
   captureScreen: () => ipcRenderer.invoke('capture-screen'),
+  nextCheckpoint: () => ipcRenderer.invoke('next-checkpoint'),
   // getSummary: () => ipcRenderer.invoke('get-screenshot-summary'),
   // findElement: (query: string) => ipcRenderer.invoke('find-element', query),
 });

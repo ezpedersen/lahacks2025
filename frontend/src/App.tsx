@@ -5,33 +5,27 @@ import Ghost from './components/Ghost';
 import GhostPoint from './components/GhostPoint';
 import AgentUIComponent from './components/AgentUIComponent';
 import { useEffect } from 'react';
-// Define the electron interface from preload
-declare global {
-  interface Window {
-    electron: {
-      captureScreen: () => Promise<{ success: boolean, path?: string, error?: string }>;
-    }
-  }
-}
+
 const App = () => {
 
-  // Handle screen capture
-  const handleCaptureScreen = async () => {
-    try {
-      console.log('Capturing screen...');
-      const result = await window.electron.captureScreen();
-      
-      if (result.success) {
-        console.log('Screen captured and saved to:', result.path);
-      } else {
-        console.error('Failed to capture screen:', result.error);
-      }
-    } catch (error) {
-      console.error('Error while capturing screen:', error);
-    }
-  };
+  // useEffect(() => {
+  //   const handleKeyDown = (event: KeyboardEvent) => {
+  //     // Check for CMD + 8
+  //     if (event.metaKey && event.key === '8') {
+  //       console.log("RAAARAAARAA")
+  //       // handleToggleTransparency();
+  //       event.preventDefault();
+  //     }
+  //   };
 
-  
+  //   // Add event listener
+  //   window.addEventListener('keydown', handleKeyDown);
+
+  //   // Clean up
+  //   return () => {
+  //     window.removeEventListener('keydown', handleKeyDown);
+  //   };
+  // }, []);
 
   // Set up keyboard shortcut listener
   useEffect(() => {
@@ -39,10 +33,17 @@ const App = () => {
       
       
    
-      // Check for CMD + 9 for screen capture
+      // Check for CMD + 9 for screen capture - change to send IPC message
       if ((event.metaKey || event.ctrlKey) && event.key === '9') {
-        handleCaptureScreen();
+        // handleCaptureScreen(); // Remove this call
+        window.ipcRenderer.send('next-checkpoint-and-capture'); // Add this call
+        console.log("CMD+9 pressed, sending next-checkpoint-and-capture"); // Optional logging
         event.preventDefault();
+      }
+      // Add test shortcut for CMD + 8
+      else if ((event.metaKey || event.ctrlKey) && event.key === '8') {
+        console.log("CMD+8 pressed for testing.");
+        event.preventDefault(); // Prevent default behavior if any
       }
     };
 

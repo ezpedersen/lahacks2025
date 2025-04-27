@@ -57,7 +57,13 @@ const AgentUIComponent: React.FC = () => {
               <h3 className="text-md font-semibold mb-2 text-purple-300">
                 Ghost Tutor
               </h3>
-              <p className="text-xs text-gray-400">(Features coming soon...)</p>
+              <p className="text-xs text-gray-400 mb-3">(Features coming soon...)</p>
+              <button
+                onClick={() => window.ipcRenderer.send('next-checkpoint-and-capture')}
+                className="w-full px-3 py-1.5 text-xs font-medium text-purple-100 bg-purple-700/60 rounded hover:bg-purple-700/80 focus:outline-none focus:ring-1 focus:ring-purple-500 transition-colors duration-200"
+              >
+                Next Checkpoint (CMD+9)
+              </button>
             </div>
           )}
 

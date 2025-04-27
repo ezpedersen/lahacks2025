@@ -55,7 +55,7 @@ const PromptInput: React.FC<PromptInputProps> = ({ prompt, setPrompt }) => {
               </button>
               <button 
                 className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors text-sm"
-                onClick={() => window.ipcRenderer.send('start-tutorial')}
+                onClick={() => window.ipcRenderer.send('start-tutorial', prompt)}
               >
                 <Play className="h-4 w-4" />
                 <span>Start Tutorial</span>

@@ -27,6 +27,7 @@ let landingWin: BrowserWindow | null
 let ghostPointWindow: BrowserWindow | null
 let ghostWindow: BrowserWindow | null = null;
 let persistentUiWin: BrowserWindow | null = null;
+let currentCheckpointNumber = 0; // Add state for checkpoint number (initialized to -1)
 
 function createWindow() {
   const primaryDisplay = screen.getPrimaryDisplay();
@@ -218,8 +219,8 @@ app.on('activate', () => {
   }
 })
 
-
-const handleCapture = async () => {
+// Modify handleCapture to accept prompt and call createGhostPointWindow
+const handleCapture = async (prompt: string) => {
     try {
       console.log('Capturing entire screen...');
     
@@ -244,7 +245,7 @@ const handleCapture = async () => {
         
         try {
           const formData = new FormData();
-          formData.append('prompt', 'im feeling lucky button');
+          formData.append('prompt', prompt); // Use passed prompt
           const screenshotBlob = new Blob([entireScreen.thumbnail.toPNG()], { type: 'image/png' });
           formData.append('file', screenshotBlob, 'screenshot.png');
           //"top-right", "bottom-left", "bottom-right", or "center"
@@ -281,6 +282,16 @@ const handleCapture = async () => {
           }
           console.log('Screenshot sent to backend successfully');
           console.log(data);
+
+          // --- Add Ghost Point Window creation here ---
+          if (data && typeof data.x === 'number' && typeof data.y === 'number') {
+            console.log(`Received coordinates: x=${data.x}, y=${data.y}. Creating GhostPointWindow.`);
+            createGhostPointWindow(data.x, data.y);
+          } else {
+            console.warn('Backend response did not contain valid x/y coordinates for GhostPointWindow.', data);
+          }
+          // --- End Ghost Point Window creation ---
+
           return { success: true, data };
         } catch (err: any) {
           console.error('Failed to send screenshot to backend:', err);
@@ -297,10 +308,65 @@ const handleCapture = async () => {
   }
 app.whenReady().then(() => {
   
+  // Remove original capture-screen handler if present
+  // ipcMain.handle('capture-screen', handleCapture) 
 
-  ipcMain.handle('capture-screen', handleCapture)
+  // Add the new handler for next-checkpoint-and-capture
+  ipcMain.on('next-checkpoint-and-capture', async () => {
+    // Calculate the checkpoint number to fetch (current + 1)
+    const checkpointToFetch = currentCheckpointNumber + 1; 
+    console.log(`CMD+9 received. Attempting to fetch checkpoint ${checkpointToFetch} and capture screen.`);
 
-  ipcMain.on('start-tutorial', () => {
+    try {
+      // 1. Fetch next checkpoint details from backend using checkpointToFetch
+      const checkpointResponse = await fetch('http://localhost:8000/next-checkpoint', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ checkpoint_number: checkpointToFetch }), // Use checkpointToFetch
+      });
+
+      if (!checkpointResponse.ok) {
+        throw new Error(`HTTP error fetching checkpoint! status: ${checkpointResponse.status}`);
+      }
+
+      const checkpointData = await checkpointResponse.json();
+      console.log('Received checkpoint data:', checkpointData);
+
+      // --- Safely extract checkpoint_ui_element --- 
+      let promptForCapture = 'Default UI element prompt'; // Fallback prompt
+      if (checkpointData && checkpointData.res && typeof checkpointData.res === 'object' && checkpointData.res.checkpoint_ui_element) {
+        promptForCapture = checkpointData.res.checkpoint_ui_element;
+        console.log(`Extracted UI element for prompt: ${promptForCapture}`);
+      } else {
+        console.warn('Could not find checkpoint_ui_element in response, using default.', checkpointData);
+        // Optionally, handle the case where the tutorial might be complete
+        if (checkpointData && checkpointData.res && typeof checkpointData.res === 'string' && checkpointData.res.includes('Tutorial complete')) {
+           console.log('Tutorial finished.');
+           // Potentially notify the user or stop further captures
+           return; // Stop processing if tutorial is done
+        }
+      }
+      // --- End extraction --- 
+
+      // 2. Call handleCapture with the extracted UI element description
+      await handleCapture(promptForCapture);
+      console.log(`Called handleCapture with prompt: ${promptForCapture}`);
+
+      // --- Increment checkpoint number ONLY after successful fetch and capture ---
+      currentCheckpointNumber = checkpointToFetch;
+      console.log(`Successfully processed checkpoint, updated currentCheckpointNumber to: ${currentCheckpointNumber}`);
+      // ----------------------------------------------------------------------------
+
+    } catch (error) {
+      console.error('Error in next-checkpoint-and-capture handler:', error);
+      // Do not increment checkpoint number on error
+    }
+  });
+
+  // Modify start-tutorial handler to fetch /transcript
+  ipcMain.on('start-tutorial', (event, prompt: string) => { 
     if (landingWin){
       landingWin.close()
       landingWin = null; // Clear reference after closing
@@ -308,9 +374,34 @@ app.whenReady().then(() => {
     // Show persistent UI after landing page is closed
     persistentUiWin?.show();
 
-    setTimeout(() => {
-      // Call handleCapture and get the result
-      handleCapture().then(result => {
+    // Send the prompt (assumed URL) to the backend /transcript endpoint
+    fetch('http://localhost:8000/transcript', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ url: prompt }), // Send prompt as url
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Received response from /transcript:', data); 
+      // TODO: Handle the response data (e.g., show first checkpoint)
+      // Reset checkpoint counter when a new tutorial starts
+      currentCheckpointNumber = -1; 
+      console.log('Tutorial started, checkpoint number reset to -1.');
+    })
+    .catch(error => {
+      console.error('Error calling /transcript endpoint:', error);
+    });
+    
+    // Remove old setTimeout logic
+    /* setTimeout(() => {
+      handleCapture(prompt).then(result => {
         console.log(result.data.x, result.data.y)
         if (result && result.success && typeof result.data.x === 'number' && typeof result.data.y === 'number') {
           createGhostPointWindow(result.data.x, result.data.y);
@@ -318,7 +409,7 @@ app.whenReady().then(() => {
       }).catch (err=> {
         console.error('Error in start-tutorial handler:', err);
       });
-    }, 1000);
+    }, 1000); */
     
   });
 
