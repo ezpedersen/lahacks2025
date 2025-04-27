@@ -166,7 +166,8 @@ const handleCapture = async () => {
           formData.append('prompt', 'the gear button');
           const screenshotBlob = new Blob([entireScreen.thumbnail.toPNG()], { type: 'image/png' });
           formData.append('file', screenshotBlob, 'screenshot.png');
-          formData.append('quadrant', JSON.stringify([[0, 500], [1400, -1]]));
+          //"top-right", "bottom-left", "bottom-right", or "center"
+          formData.append('quadrant', "top-right");
 
           // Save the screenshot to disk for debugging
           const fs = await import('fs');

@@ -72,11 +72,40 @@ def scaled_coords(box: list, image_size: Tuple[int, int]):
     return (x, y, x + w, y + h)
 
 
-def process(img_bytes, feature, quadrant):
+def process(img_bytes, feature, quadrant: str):
+    # Determine crop region based on quadrant string (relative to image size)
+    # quadrant can be: "top-left", "top-right", "bottom-left", "bottom-right", or "center"
     # Open the image
     image = Image.open(io.BytesIO(img_bytes)).convert("RGBA")
     original_width, original_height = image.size
-    (from_row, to_row), (from_col, to_col) = quadrant
+
+    w, h = original_width, original_height
+    crop_fraction = 0.5  # Crop to half width/height for each quadrant
+    if quadrant == "top-left":
+        from_row, to_row = 0, int(h * crop_fraction)
+        from_col, to_col = 0, int(w * crop_fraction)
+    elif quadrant == "top-right":
+        from_row, to_row = 0, int(h * crop_fraction)
+        from_col, to_col = int(w * crop_fraction), w
+    elif quadrant == "bottom-left":
+        from_row, to_row = int(h * crop_fraction), h
+        from_col, to_col = 0, int(w * crop_fraction)
+    elif quadrant == "bottom-right":
+        from_row, to_row = int(h * crop_fraction), h
+        from_col, to_col = int(w * crop_fraction), w
+    elif quadrant == "center":
+        center_x, center_y = w // 2, h // 2
+        box_w, box_h = int(w * crop_fraction), int(h * crop_fraction)
+        from_col = max(center_x - box_w // 2, 0)
+        to_col = min(center_x + box_w // 2, w)
+        from_row = max(center_y - box_h // 2, 0)
+        to_row = min(center_y + box_h // 2, h)
+    else:
+        # Default to full image if unknown
+        from_row, to_row = 0, h
+        from_col, to_col = 0, w
+
+    # (from_row, to_row), (from_col, to_col) = quadrant
     if from_row == -1:
         from_row = 0
     if to_row == -1:
@@ -136,7 +165,8 @@ if __name__ == "__main__":
     with open("./example.png", "rb") as f:
         img_bytes = f.read()
     feature = "gear settings button"
-    quadrant = [[0, 400], [1600, -1]]
+    # quadrant = [[0, 400], [1600, -1]]
+    quadrant = "top-right"
 
     # Create a new image for drawing
     draw_image = Image.open(io.BytesIO(img_bytes)).convert("RGBA")

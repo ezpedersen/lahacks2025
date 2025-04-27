@@ -13,7 +13,7 @@ async def parse_url(url_input: str):
 @app.post("/screen")
 async def screenshot(file: UploadFile = File(...), prompt: str = Form(...), quadrant: str = Form(...)):
     import json
-    quadrant = json.loads(quadrant)
+    # quadrant = json.loads(quadrant)
     # quadrant = [[0, 500], [1400, -1]]
     image = await file.read()
     response = process(image, prompt, quadrant)
