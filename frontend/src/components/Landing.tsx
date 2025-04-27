@@ -5,7 +5,7 @@ import QuickActions from './QuickActions';
 
 
 function Landing() {
-  const [prompt, setPrompt] = useState<string>('https://www.youtube.com/watch?v=otIVC4Uue9U');
+  const [prompt, setPrompt] = useState<string>('https://www.youtube.com/watch?v=Ry2wUn4j1Vk');
 
 
 
