@@ -17,6 +17,16 @@ const CartoonSpeechBubble: React.FC<CartoonSpeechBubbleProps> = ({ children, cla
 
   return (
     <div className="relative">
+      <style>
+        {`
+         
+          @keyframes dot-grow {
+            0% { transform: scale(1);}
+            50% { transform: scale(1.2);}
+            100% { transform: scale(1);}
+          }
+        `}
+      </style>
       {/* Little Dot (anchor parent) */}
       <div 
         className="w-3 h-3 rounded-full border-2 border-purple-600"
@@ -25,6 +35,7 @@ const CartoonSpeechBubble: React.FC<CartoonSpeechBubbleProps> = ({ children, cla
           boxShadow: `0 0 ${isGlowing ? '5px' : '2px'} rgba(170, 0, 255, ${isGlowing ? '0.4' : '0.2'})`,
           transition: 'box-shadow 0.8s ease-in-out, background 0.8s ease-in-out',
           backdropFilter: 'blur(4px)',
+          animation: 'dot-grow 1.5s ease-in-out infinite',
         }}
       />
 
@@ -37,6 +48,8 @@ const CartoonSpeechBubble: React.FC<CartoonSpeechBubbleProps> = ({ children, cla
             boxShadow: `0 0 ${isGlowing ? '6px' : '3px'} rgba(170, 0, 255, ${isGlowing ? '0.4' : '0.2'})`,
             transition: 'box-shadow 0.8s ease-in-out, background 0.8s ease-in-out',
             backdropFilter: 'blur(4px)',
+            animation: 'dot-grow 1.5s ease-in-out infinite',
+            animationDelay: '0.15s',
           }}
         />
       </div>
@@ -50,6 +63,8 @@ const CartoonSpeechBubble: React.FC<CartoonSpeechBubbleProps> = ({ children, cla
             boxShadow: `0 0 ${isGlowing ? '8px' : '4px'} rgba(170, 0, 255, ${isGlowing ? '0.4' : '0.2'})`,
             transition: 'box-shadow 0.8s ease-in-out, background 0.8s ease-in-out',
             backdropFilter: 'blur(4px)',
+            animation: 'dot-grow 1.5s ease-in-out infinite',
+            animationDelay: '0.3s',
           }}
         />
       </div>
@@ -67,6 +82,7 @@ const CartoonSpeechBubble: React.FC<CartoonSpeechBubbleProps> = ({ children, cla
           transition: 'box-shadow 0.8s ease-in-out, background 0.8s ease-in-out',
           transform: 'rotate(-1deg)',
           backdropFilter: 'blur(4px)',
+      
         }}
       >
         {children}
