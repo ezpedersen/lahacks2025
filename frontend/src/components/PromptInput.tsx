@@ -58,7 +58,14 @@ const PromptInput: React.FC<PromptInputProps> = ({ prompt, setPrompt }) => {
                 onClick={() => window.ipcRenderer.send('start-tutorial', prompt)}
               >
                 <Play className="h-4 w-4" />
-                <span>Start Tutorial</span>
+                <span>Analyze Tutorial</span>
+              </button>
+              <button 
+                className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors text-sm"
+                onClick={() => window.electron.processCheckpoints()}
+              >
+                <Play className="h-4 w-4" />
+                <span>Create Tutorial</span>
               </button>
             </div>
             

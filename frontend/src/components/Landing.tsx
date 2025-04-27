@@ -6,7 +6,7 @@ import CartoonSpeechBubble from './CartoonSpeechBubble';
 
 
 function Landing() {
-  const [prompt, setPrompt] = useState<string>('');
+  const [prompt, setPrompt] = useState<string>('https://www.youtube.com/watch?v=otIVC4Uue9U');
 
 
 
