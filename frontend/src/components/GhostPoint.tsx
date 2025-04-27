@@ -34,7 +34,7 @@ const GhostPoint: React.FC = () => {
             top: 50%;
             /* Remove transform, use margin to center perfectly */
             transform: translate(-50%, -50%);
-            box-shadow: 0 0 3px 3px rgba(180,180,255,1);
+            box-shadow: 0 0 3px 3px rgba(180,180,255,0.2);
             z-index: 2;
           }
           .ghost-ring {

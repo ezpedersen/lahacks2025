@@ -38,7 +38,6 @@ function createWindow() {
     height: height,
     x: 0,
     y: 0,
-    icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
     frame: false,
     hasShadow: false,
     resizable: false,
@@ -49,6 +48,7 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
     },
+    icon: path.join(process.env.VITE_PUBLIC, 'ghost.svg')
   })
 
   // Make the window clickthrough (ignore mouse events)
