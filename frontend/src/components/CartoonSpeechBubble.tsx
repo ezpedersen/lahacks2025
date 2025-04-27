@@ -38,7 +38,7 @@ const CartoonSpeechBubble: React.FC<CartoonSpeechBubbleProps> = ({ children, cla
     timers.push(setTimeout(() => setShowBubble(true), 500));
 
     return () => timers.forEach(clearTimeout);
-  }, [children]); // re-run pop animation if children changes (e.g., new message)
+  }, []); // re-run pop animation if children changes (e.g., new message)
 
   // Glowing effect for all dots and bubble
   useEffect(() => {
