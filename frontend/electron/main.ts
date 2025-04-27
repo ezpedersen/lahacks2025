@@ -44,7 +44,7 @@ function createWindow() {
     // alwaysOnTop: true,
     transparent: true,
     focusable: false, // Make window not focusable for clickthrough
-    skipTaskbar: true,
+    skipTaskbar: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
     },
@@ -131,12 +131,13 @@ function createGhostPointWindow(x: number, y: number) {
   ghostPointWindow = new BrowserWindow({
     width: 50,
     height: 50,
-    x: x-25,
-    y: y-25,
+    x: x - 25,
+    y: y - 25,
     frame: false,
     alwaysOnTop: true,
     skipTaskbar: true,
     resizable: false,
+    transparent: true, // Make background transparent
     parent: win,
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
@@ -144,6 +145,8 @@ function createGhostPointWindow(x: number, y: number) {
       contextIsolation: false
     }
   });
+  // Allow mouse events to pass through transparent areas, but still receive clicks on opaque content
+  ghostPointWindow.setIgnoreMouseEvents(true, { forward: true });
   if (VITE_DEV_SERVER_URL) {
     ghostPointWindow.loadURL(path.join(VITE_DEV_SERVER_URL, 'ghostpoint'));
   } else {
@@ -174,7 +177,7 @@ function createAgentUiWindow() {
     skipTaskbar: true,
     focusable: false,
     resizable: false,
-    // parent: win,
+    parent: win,
     show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
@@ -348,5 +351,6 @@ app.whenReady().then(() => {
 
   createWindow()
   createLanding()
+  createGhostPointWindow(500, 500)
   createAgentUiWindow() // Create the persistent UI window on startup
 })
