@@ -342,12 +342,7 @@ app.whenReady().then(() => {
 
   // Modify start-tutorial handler to fetch /transcript
   ipcMain.on('start-tutorial', (event, prompt: string) => { 
-    if (landingWin){
-      landingWin.close()
-      landingWin = null; // Clear reference after closing
-    }
-    // Show persistent UI after landing page is closed
-    persistentUiWin?.show();
+
 
     // Send the prompt (assumed URL) to the backend /transcript endpoint
     fetch('http://localhost:8000/transcript', {
@@ -364,14 +359,16 @@ app.whenReady().then(() => {
       return response.json();
     })
     .then(data => {
-      console.log('Received response from /transcript:', data); 
+      console.log('Received response from /transcript:', data);
       // TODO: Handle the response data (e.g., show first checkpoint)
       // Reset checkpoint counter when a new tutorial starts
-      currentCheckpointNumber = -1; 
+      currentCheckpointNumber = -1;
       console.log('Tutorial started, checkpoint number reset to -1.');
+      event.reply('tutorial-analyzed', { success: true }); // Notify renderer
     })
     .catch(error => {
       console.error('Error calling /transcript endpoint:', error);
+      event.reply('tutorial-analyzed', { success: false, error: error.message }); // Notify renderer about error
     });
     
     // Remove old setTimeout logic
@@ -414,6 +411,45 @@ app.whenReady().then(() => {
   //      console.warn('Received invalid resize request or ghost window is gone.');
   //   }
   // });
+
+  // Add the handler for process-checkpoints
+  ipcMain.handle('process-checkpoints', async () => {
+    console.log('Received process-checkpoints request. Calling backend /create-tutorial...');
+    try {
+      const response = await fetch('http://localhost:8000/create-tutorial', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // No body needed unless we want to pass parameters later
+      });
+
+      if (!response.ok) {
+        // Try to get more detailed error from backend response
+        const errorData = await response.json().catch(() => ({ detail: 'Unknown error occurred' }));
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.detail}`);
+      }
+
+      const result = await response.json();
+      console.log('Backend /create-tutorial response:', result);
+
+      if (landingWin){
+        landingWin.close()
+        landingWin = null; // Clear reference after closing
+      }
+      // Show persistent UI after landing page is closed
+      persistentUiWin?.show();
+      // Optionally notify the renderer process of success/failure
+      // win?.webContents.send('checkpoints-processed', { success: true, ...result });
+      return { success: true, message: result.message || 'Checkpoints processed successfully.' };
+
+    } catch (error: any) {
+      console.error('Error calling /create-tutorial endpoint:', error);
+      // Optionally notify the renderer process of failure
+      // win?.webContents.send('checkpoints-processed', { success: false, message: error.message });
+      return { success: false, message: `Failed to process checkpoints: ${error.message}` };
+    }
+  });
 
   createWindow()
   createLanding()

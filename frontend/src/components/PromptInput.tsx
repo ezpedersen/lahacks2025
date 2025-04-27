@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Paperclip, Plus, Youtube, Eye, Play } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Paperclip, Plus, Youtube, Eye, Play, Loader2 } from 'lucide-react';
 import { useTypingEffect } from '../hooks/useTypingEffect';
 
 interface PromptInputProps {
@@ -9,6 +9,8 @@ interface PromptInputProps {
 
 const PromptInput: React.FC<PromptInputProps> = ({ prompt, setPrompt }) => {
   const [isFocused, setIsFocused] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   
   const placeholderTexts = [
     'Paste any Youtube video url to get started.',
@@ -23,6 +25,36 @@ const PromptInput: React.FC<PromptInputProps> = ({ prompt, setPrompt }) => {
     deletingSpeed: 30,
     delayBetweenTexts: 2000
   });
+
+  const handleAnalyzeTutorial = () => {
+    setIsAnalyzing(true);
+    window.ipcRenderer.send('start-tutorial', prompt);
+  };
+
+  const handleCreateTutorial = () => {
+    setIsCreating(true);
+    window.electron.processCheckpoints();
+  };
+
+  const isProcessing = isAnalyzing || isCreating;
+
+  useEffect(() => {
+    const handleTutorialAnalyzed = (_event: any, result: { success: boolean, error?: string }) => {
+      console.log('Received tutorial-analyzed:', result);
+      if (!result.success) {
+        console.error('Tutorial analysis failed:', result.error);
+        // Optionally show an error message to the user here
+      }
+      setIsAnalyzing(false); // Stop loading regardless of success/failure
+    };
+
+    window.ipcRenderer.on('tutorial-analyzed', handleTutorialAnalyzed);
+
+    // Cleanup listener on component unmount
+    return () => {
+      window.ipcRenderer.off('tutorial-analyzed', handleTutorialAnalyzed);
+    };
+  }, []); // Empty dependency array ensures this runs only once on mount
 
   return (
     <div className="w-11/12 md:w-9/12 lg:w-7/12 xl:w-6/12 max-w-2xl mx-auto mb-8">
@@ -45,29 +77,58 @@ const PromptInput: React.FC<PromptInputProps> = ({ prompt, setPrompt }) => {
           
           <div className="flex items-center justify-between bg-gray-900/60 p-3">
             <div className="flex space-x-4">
-              <button className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors text-sm">
+              <button
+                className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isProcessing}
+              >
                 <Paperclip className="h-4 w-4" />
                 <span>Attach</span>
               </button>
-              <button className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors text-sm">
+              <button
+                className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isProcessing}
+              >
                 <Youtube className="h-4 w-4" />
                 <span>Import Youtube</span>
               </button>
-              <button 
-                className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors text-sm"
-                onClick={() => window.ipcRenderer.send('start-tutorial', prompt)}
+              <button
+                className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleAnalyzeTutorial}
+                disabled={isProcessing}
               >
-                <Play className="h-4 w-4" />
-                <span>Start Tutorial</span>
+                {isAnalyzing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Play className="h-4 w-4" />
+                )}
+                <span>{isAnalyzing ? 'Analyzing...' : 'Analyze Tutorial'}</span>
+              </button>
+              <button
+                className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleCreateTutorial}
+                disabled={isProcessing}
+              >
+                {isCreating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Play className="h-4 w-4" />
+                )}
+                <span>{isCreating ? 'Creating...' : 'Create Tutorial'}</span>
               </button>
             </div>
             
             <div className="flex space-x-4">
-              <button className="flex items-center space-x-2 text-gray-400 hover:text-white rounded-md transition-colors text-sm">
+              <button
+                className="flex items-center space-x-2 text-gray-400 hover:text-white rounded-md transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isProcessing}
+              >
                 <Eye className="h-4 w-4" />
                 <span>Public</span>
               </button>
-              <button className="bg-gray-800 p-2 rounded-md hover:bg-gray-700 transition-colors">
+              <button
+                className="bg-gray-800 p-2 rounded-md hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isProcessing}
+              >
                 <Plus className="h-4 w-4 text-gray-300" />
               </button>
             </div>
