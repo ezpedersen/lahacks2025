@@ -166,6 +166,7 @@ const handleCapture = async () => {
           formData.append('prompt', 'Click the Help button at the top of the screen');
           const screenshotBlob = new Blob([entireScreen.thumbnail.toPNG()], { type: 'image/png' });
           formData.append('file', screenshotBlob, 'screenshot.png');
+          // formData.append('quadrant', JSON.stringify([[0, 500], [700, -1]]));
 
           // Save the screenshot to disk for debugging
           const fs = await import('fs');
