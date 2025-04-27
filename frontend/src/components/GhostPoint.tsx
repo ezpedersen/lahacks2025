@@ -70,14 +70,14 @@ const GhostPoint: React.FC = () => {
           }
         `}
       </style>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
-        <div className="ghost-dot-center">
+      <div style={{ position: 'absolute', left: '30px', top: "50%", transform: 'translate(-50%, -50%)' }}>
+        <div className="ghost-dot-center" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div className="ghost-ring" />
           <div className="ghost-ring ring2" />
           <div className="ghost-dot" />
-        </div>
-        <div style={{ position: 'relative', top: '50px', left: '-10px' }}>
-          <Ghost />
+          <div style={{ position: 'absolute', top: '30px', left: '50px' }}>
+            <Ghost />
+          </div>
         </div>
       </div>
     </div>

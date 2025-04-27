@@ -25,7 +25,6 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 let win: BrowserWindow | null
 let landingWin: BrowserWindow | null
 let ghostPointWindow: BrowserWindow | null
-const ghostWindow: BrowserWindow | null = null;
 let persistentUiWin: BrowserWindow | null = null;
 let currentCheckpointNumber = 0; // Add state for checkpoint number (initialized to -1)
 
@@ -107,7 +106,7 @@ function createGhostPointWindow(x: number, y: number) {
     
     width: w,
     height: h,
-    x: x - Math.floor(w / 2),
+    x: x - 30,
     y: y - Math.floor(h / 2),
     frame: false,
     alwaysOnTop: true,
@@ -453,6 +452,6 @@ app.whenReady().then(() => {
 
   createWindow()
   createLanding()
-  createGhostPointWindow(800, 500)
+  createGhostPointWindow(30, 300)
   createAgentUiWindow() // Create the persistent UI window on startup
 })
