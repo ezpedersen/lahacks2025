@@ -1,4 +1,5 @@
 import React from 'react';
+import Ghost from './Ghost';
 
 const GhostPoint: React.FC = () => {
   return (
@@ -69,10 +70,15 @@ const GhostPoint: React.FC = () => {
           }
         `}
       </style>
-      <div className="ghost-dot-center">
-        <div className="ghost-ring" />
-        <div className="ghost-ring ring2" />
-        <div className="ghost-dot" />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+        <div className="ghost-dot-center">
+          <div className="ghost-ring" />
+          <div className="ghost-ring ring2" />
+          <div className="ghost-dot" />
+        </div>
+        <div style={{ position: 'relative', top: '50px', left: '-10px' }}>
+          <Ghost />
+        </div>
       </div>
     </div>
   );

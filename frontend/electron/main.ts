@@ -25,7 +25,7 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 let win: BrowserWindow | null
 let landingWin: BrowserWindow | null
 let ghostPointWindow: BrowserWindow | null
-let ghostWindow: BrowserWindow | null = null;
+const ghostWindow: BrowserWindow | null = null;
 let persistentUiWin: BrowserWindow | null = null;
 let currentCheckpointNumber = 0; // Add state for checkpoint number (initialized to -1)
 
@@ -96,44 +96,19 @@ function createLanding() {
     landingWin.loadFile(path.join(RENDERER_DIST, 'index.html'), { hash: '/ghost' });
   }
 }
-function createGhostWindow(x: number, y: number) {
-  if (ghostWindow) {
-    ghostWindow.close();
-  }
-  if (!win){return}
-  ghostWindow = new BrowserWindow({
-    show: false,
-    x: x,
-    y: y,
-    frame: false,
-    alwaysOnTop: true,
-    skipTaskbar: true,
-    resizable: false,
-    transparent: true,
-    parent: win,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.mjs'),
-      nodeIntegration: true,
-      contextIsolation: false
-    }
-  });
-
-  if (VITE_DEV_SERVER_URL) {
-    ghostWindow.loadURL(path.join(VITE_DEV_SERVER_URL, 'ghost'));
-  } else {
-    ghostWindow.loadFile(path.join(RENDERER_DIST, 'index.html'), { hash: '/ghost' });
-  }
-}
 function createGhostPointWindow(x: number, y: number) {
   if (ghostPointWindow) {
     ghostPointWindow.close();
   }
   if (!win){return}
+  const w = 600
+  const h = 600
   ghostPointWindow = new BrowserWindow({
-    width: 50,
-    height: 50,
-    x: x - 25,
-    y: y - 25,
+    
+    width: w,
+    height: h,
+    x: x - Math.floor(w / 2),
+    y: y - Math.floor(h / 2),
     frame: false,
     alwaysOnTop: true,
     skipTaskbar: true,
@@ -414,34 +389,34 @@ app.whenReady().then(() => {
   });
 
   // Add the listener for resizing the ghost window
-  ipcMain.on('resize-ghost-window', (event, size) => {
-    if (ghostWindow && !ghostWindow.isDestroyed() && size && typeof size.width === 'number' && typeof size.height === 'number') {
-      console.log(`Resizing ghost window to ${size.width}x${size.height}`);
-      // Ensure integers and minimum size
-      const width = Math.max(1, Math.ceil(size.width));
-      const height = Math.max(1, Math.ceil(size.height));
+  // ipcMain.on('resize-ghost-window', (event, size) => {
+  //   if (ghostWindow && !ghostWindow.isDestroyed() && size && typeof size.width === 'number' && typeof size.height === 'number') {
+  //     console.log(`Resizing ghost window to ${size.width}x${size.height}`);
+  //     // Ensure integers and minimum size
+  //     const width = Math.max(1, Math.ceil(size.width));
+  //     const height = Math.max(1, Math.ceil(size.height));
 
-      try {
-        // Set size first
-        ghostWindow.setSize(width, height, false); // Set false for animation if desired
+  //     try {
+  //       // Set size first
+  //       ghostWindow.setSize(width, height, false); // Set false for animation if desired
 
-        // You might adjust position slightly here if 'x, y' was meant to be the center
-        // For example:
-        // const originalPos = ghostWindow.getPosition();
-        // ghostWindow.setPosition(originalPos[0] - Math.floor(width / 2), originalPos[1] - Math.floor(height / 2));
+  //       // You might adjust position slightly here if 'x, y' was meant to be the center
+  //       // For example:
+  //       // const originalPos = ghostWindow.getPosition();
+  //       // ghostWindow.setPosition(originalPos[0] - Math.floor(width / 2), originalPos[1] - Math.floor(height / 2));
 
-        // Then show the window
-        ghostWindow.show();
-      } catch (error) {
-         console.error('Error resizing or showing ghost window:', error);
-      }
-    } else {
-       console.warn('Received invalid resize request or ghost window is gone.');
-    }
-  });
+  //       // Then show the window
+  //       ghostWindow.show();
+  //     } catch (error) {
+  //        console.error('Error resizing or showing ghost window:', error);
+  //     }
+  //   } else {
+  //      console.warn('Received invalid resize request or ghost window is gone.');
+  //   }
+  // });
 
   createWindow()
   createLanding()
-  createGhostPointWindow(500, 500)
+  createGhostPointWindow(800, 500)
   createAgentUiWindow() // Create the persistent UI window on startup
 })
