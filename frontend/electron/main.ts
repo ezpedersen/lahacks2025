@@ -27,6 +27,7 @@ let landingWin: BrowserWindow | null
 let ghostPointWindow: BrowserWindow | null
 let persistentUiWin: BrowserWindow | null = null;
 let currentCheckpointNumber = 0; // Add state for checkpoint number (initialized to -1)
+let ghostPointPosition = { left: '47%', top: '13.5%' };
 
 function createWindow() {
   const primaryDisplay = screen.getPrimaryDisplay();
@@ -440,7 +441,10 @@ app.whenReady().then(() => {
   // Add the handler for process-checkpoints
   ipcMain.handle('process-checkpoints', async () => {
     console.log('Received process-checkpoints request. Calling backend /create-tutorial...');
+    createGhostPointWindow(30, 300, 'Initial description')
+
     try {
+      
       const response = await fetch('http://localhost:8000/create-tutorial', {
         method: 'POST',
         headers: {
@@ -448,6 +452,7 @@ app.whenReady().then(() => {
         },
         // No body needed unless we want to pass parameters later
       });
+      
 
       if (!response.ok) {
         // Try to get more detailed error from backend response
@@ -457,13 +462,12 @@ app.whenReady().then(() => {
 
       const result = await response.json();
       console.log('Backend /create-tutorial response:', result);
-
-      if (landingWin){
-        landingWin.close()
-        landingWin = null; // Clear reference after closing
-      }
-      // Show persistent UI after landing page is closed
-      persistentUiWin?.show();
+       if (landingWin) {
+          landingWin.close();
+          landingWin = null; // Clear reference after closing
+        }
+        // Show persistent UI after landing page is closed, with 0.5s delay
+          persistentUiWin?.show();
       // Optionally notify the renderer process of success/failure
       // win?.webContents.send('checkpoints-processed', { success: true, ...result });
       return { success: true, message: result.message || 'Checkpoints processed successfully.' };
@@ -476,8 +480,39 @@ app.whenReady().then(() => {
     }
   });
 
+  // IPC handler to get the ghost point position
+  ipcMain.handle('get-ghost-point-position', async () => {
+    return ghostPointPosition;
+  });
+
+  // IPC handler to set the ghost point position
+  ipcMain.handle('set-ghost-point-position', async (_event, newPosition) => {
+    if (
+      newPosition &&
+      typeof newPosition.left === 'string' &&
+      typeof newPosition.top === 'string'
+    ) {
+      ghostPointPosition = newPosition;
+      // Broadcast to all renderer windows
+      BrowserWindow.getAllWindows().forEach(win => {
+        win.webContents.send('set-ghost-point-position', ghostPointPosition);
+      });
+      return { success: true };
+    }
+    return { success: false, error: 'Invalid position' };
+  });
+
   createWindow()
   createLanding()
-  createGhostPointWindow(30, 300, 'Initial description')
   createAgentUiWindow() // Create the persistent UI window on startup
+
+  // TEST: After 3 seconds, move the ghost point to a new position
+  setTimeout(() => {
+    ghostPointPosition = { left: '60%', top: '40%' };
+    if (ghostPointWindow) {
+      ghostPointWindow.webContents.send('set-ghost-point-position', ghostPointPosition);
+      ghostPointWindow.webContents.send('set-ghost-message', 'Test: Ghost moved to a new position!');
+      console.log('Test: Sent new ghost point position and message via IPC (ghostPointWindow only)');
+    }
+  }, 3000);
 })

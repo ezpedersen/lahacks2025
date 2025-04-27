@@ -1,24 +1,53 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Ghost from './Ghost';
 
 const DEFAULT_POSITION = { left: '47%', top: '13.5%' };
-const TARGET_POSITION = { left: '70%', top: '60%' }; // Example new location
+
 
 const GhostPoint: React.FC = () => {
   const [position, setPosition] = useState(DEFAULT_POSITION);
-  const [transitioning, setTransitioning] = useState(false);
   const dotRef = useRef<HTMLDivElement>(null);
 
-  // Example: Move to new location after 1s (for demo)
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setTransitioning(true);
-      setPosition(TARGET_POSITION);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
+  // Listen for IPC event to update the ghost point position (and set initial position if main has something to say)
+  useEffect(() => {
+    // Handler for IPC event
+    const handleSetGhostPointPosition = (_event: unknown, newPosition: { left: string; top: string }) => {
+      if (
+        newPosition &&
+        typeof newPosition.left === 'string' &&
+        typeof newPosition.top === 'string'
+      ) {
+        setPosition(newPosition);
+      }
+    };
 
-  // Optionally, you can expose setPosition for external control
+    // Only add listener if ipcRenderer is available (Electron context)
+    if (window.ipcRenderer && window.ipcRenderer.on) {
+      window.ipcRenderer.on('set-ghost-point-position', handleSetGhostPointPosition);
+    }
+
+    // On mount, ask main process if it has a position for us
+    if (window.ipcRenderer && window.ipcRenderer.invoke) {
+      window.ipcRenderer.invoke('get-ghost-point-position').then((mainPosition: { left: string; top: string } | null) => {
+        if (
+          mainPosition &&
+          typeof mainPosition.left === 'string' &&
+          typeof mainPosition.top === 'string'
+        ) {
+          setPosition(mainPosition);
+        }
+      }).catch(() => {
+        // ignore if not implemented
+      });
+    }
+
+    // Cleanup
+    return () => {
+      if (window.ipcRenderer && window.ipcRenderer.off) {
+        window.ipcRenderer.off('set-ghost-point-position', handleSetGhostPointPosition);
+      }
+    };
+  }, []);
 
   return (
     <div
