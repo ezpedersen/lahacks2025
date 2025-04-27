@@ -1,16 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const AgentUIComponent: React.FC = () => {
   // Simple glow state for demonstration, could be removed if not needed
-  const [isGlowing] = React.useState(true); 
+  const [isGlowing] = useState(true); 
+  const [activeTab, setActiveTab] = useState<'Tutor' | 'Custom'>('Tutor');
+
+  const newWidth = '267px';
+  const newHeight = '200px';
 
   return (
     <div 
       className="fixed bottom-4 right-4 p-0 m-0" // Use fixed positioning
       style={{
-        // Adjust width/height as needed
-        width: '200px', 
-        height: '150px', 
+        width: newWidth, 
+        height: newHeight, 
       }}
     >
       <div
@@ -25,12 +28,50 @@ const AgentUIComponent: React.FC = () => {
           backdropFilter: 'blur(3px)', // Slightly less blur?
         }}
       >
-        <h3 className="text-md font-semibold mb-2 text-purple-300 border-b border-purple-500 pb-1">
-          Ghost Guide
-        </h3>
-        <div className="flex-grow">
-          {/* Content area - currently blank */}
-          <p className="text-xs text-gray-400">(Features coming soon...)</p>
+        {/* Tab Buttons */}
+        <div className="flex border-b border-purple-600 mb-2">
+          <button
+            onClick={() => setActiveTab('Tutor')}
+            className={`px-4 py-1 text-xs font-medium rounded-t-md transition-colors duration-200 
+                        ${activeTab === 'Tutor' 
+                          ? 'bg-purple-700/50 text-purple-100 border-purple-500' 
+                          : 'text-purple-400 hover:bg-purple-800/30'}`}
+          >
+            Tutor
+          </button>
+          <button
+            onClick={() => setActiveTab('Custom')}
+            className={`px-4 py-1 text-xs font-medium rounded-t-md transition-colors duration-200 
+                        ${activeTab === 'Custom' 
+                          ? 'bg-purple-700/50 text-purple-100 border-purple-500' 
+                          : 'text-purple-400 hover:bg-purple-800/30'}`}
+          >
+            Custom
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        <div className="flex-grow overflow-auto">
+          {activeTab === 'Tutor' && (
+            <div className="p-1">
+              <h3 className="text-md font-semibold mb-2 text-purple-300">
+                Ghost Tutor
+              </h3>
+              <p className="text-xs text-gray-400">(Features coming soon...)</p>
+            </div>
+          )}
+
+          {activeTab === 'Custom' && (
+            <div className="p-1">
+               <h3 className="text-md font-semibold mb-2 text-purple-300">
+                Custom Input
+              </h3>
+              <textarea 
+                placeholder="Enter your custom instructions here..."
+                className="w-full h-24 p-2 text-xs text-gray-100 bg-gray-800/50 border border-purple-700 rounded focus:outline-none focus:ring-1 focus:ring-purple-500 resize-none"
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

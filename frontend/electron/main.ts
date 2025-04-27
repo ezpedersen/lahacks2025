@@ -128,8 +128,8 @@ function createAgentUiWindow() {
 
   const primaryDisplay = screen.getPrimaryDisplay();
   const { width: screenWidth, height: screenHeight } = primaryDisplay.bounds;
-  const uiWidth = 224; // Match component width
-  const uiHeight = 174; // Match component height
+  const uiWidth = 280; // Updated component width
+  const uiHeight = 212; // Updated component height
   const borderWidth = 2; // The border width from the component CSS
   const windowWidth = uiWidth + (borderWidth * 2);
   const windowHeight = uiHeight + (borderWidth * 2);
