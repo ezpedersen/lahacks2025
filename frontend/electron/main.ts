@@ -24,6 +24,7 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 
 let win: BrowserWindow | null
 let landingWin: BrowserWindow | null
+let ghostPointWindow: BrowserWindow | null
 let ghostWindow: BrowserWindow | null = null;
 let persistentUiWin: BrowserWindow | null = null;
 
@@ -122,7 +123,33 @@ function createGhostWindow(x: number, y: number) {
     ghostWindow.loadFile(path.join(RENDERER_DIST, 'index.html'), { hash: '/ghost' });
   }
 }
-
+function createGhostPointWindow(x: number, y: number) {
+  if (ghostPointWindow) {
+    ghostPointWindow.close();
+  }
+  if (!win){return}
+  ghostPointWindow = new BrowserWindow({
+    width: 50,
+    height: 50,
+    x: x,
+    y: y,
+    frame: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    resizable: false,
+    parent: win,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.mjs'),
+      nodeIntegration: true,
+      contextIsolation: false
+    }
+  });
+  if (VITE_DEV_SERVER_URL) {
+    ghostPointWindow.loadURL(path.join(VITE_DEV_SERVER_URL, 'ghostpoint'));
+  } else {
+    ghostPointWindow.loadFile(path.join(RENDERER_DIST, 'index.html'), { hash: '/ghostpoint' });
+  }
+}
 function createAgentUiWindow() {
   if (!win) return; // Requires the main window as parent
 
@@ -214,11 +241,11 @@ const handleCapture = async () => {
         
         try {
           const formData = new FormData();
-          formData.append('prompt', 'the gear button');
+          formData.append('prompt', 'im feeling lucky button');
           const screenshotBlob = new Blob([entireScreen.thumbnail.toPNG()], { type: 'image/png' });
           formData.append('file', screenshotBlob, 'screenshot.png');
           //"top-right", "bottom-left", "bottom-right", or "center"
-          formData.append('quadrant', "top-right");
+          formData.append('quadrant', "center");
 
           // Save the screenshot to disk for debugging
           const fs = await import('fs');
@@ -283,7 +310,7 @@ app.whenReady().then(() => {
       handleCapture().then(result => {
         console.log(result.data.x, result.data.y)
         if (result && result.success && typeof result.data.x === 'number' && typeof result.data.y === 'number') {
-          createGhostWindow(result.data.x, result.data.y);
+          createGhostPointWindow(result.data.x, result.data.y);
         } 
       }).catch (err=> {
         console.error('Error in start-tutorial handler:', err);
