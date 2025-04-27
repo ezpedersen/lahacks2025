@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import './App.css'
 import Landing from './components/Landing';
 import Ghost from './components/Ghost';
+import AgentUIComponent from './components/AgentUIComponent';
 import { useEffect } from 'react';
 // Define the electron interface from preload
 declare global {
@@ -58,6 +59,7 @@ const App = () => {
         <Route path="/" element={<div></div>} />
         <Route path="/ghost" element={<Ghost />} />
         <Route path="/landing" element={<Landing />} />
+        <Route path="/persistent-ui" element={<AgentUIComponent />} />
       </Routes>
     </Router>
   )

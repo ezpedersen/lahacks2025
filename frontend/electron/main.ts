@@ -25,6 +25,7 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 let win: BrowserWindow | null
 let landingWin: BrowserWindow | null
 let ghostWindow: BrowserWindow | null = null;
+let persistentUiWin: BrowserWindow | null = null;
 
 function createWindow() {
   const primaryDisplay = screen.getPrimaryDisplay();
@@ -65,6 +66,10 @@ function createLanding() {
   if (!win){
     return
   }
+
+  // Hide the persistent UI when landing page is shown
+  persistentUiWin?.hide();
+
   landingWin = new BrowserWindow({
     width: width,
     height: height,
@@ -82,7 +87,6 @@ function createLanding() {
       preload: path.join(__dirname, 'preload.mjs'),
     },
   })
-
 
   if (VITE_DEV_SERVER_URL) {
     landingWin.loadURL(path.join(VITE_DEV_SERVER_URL, 'landing'));
@@ -117,6 +121,53 @@ function createGhostWindow(x: number, y: number) {
   } else {
     ghostWindow.loadFile(path.join(RENDERER_DIST, 'index.html'), { hash: '/ghost' });
   }
+}
+
+function createAgentUiWindow() {
+  if (!win) return; // Requires the main window as parent
+
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width: screenWidth, height: screenHeight } = primaryDisplay.bounds;
+  const uiWidth = 224; // Match component width
+  const uiHeight = 174; // Match component height
+  const borderWidth = 2; // The border width from the component CSS
+  const windowWidth = uiWidth + (borderWidth * 2);
+  const windowHeight = uiHeight + (borderWidth * 2);
+  const padding = 16; // Match component padding (approx bottom-4 right-4)
+
+  persistentUiWin = new BrowserWindow({
+    width: windowWidth, // Use calculated width
+    height: windowHeight, // Use calculated height
+    x: screenWidth - windowWidth - padding, // Adjust x based on new width
+    y: screenHeight - windowHeight - padding, // Adjust y based on new height
+    icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true, 
+    skipTaskbar: true,
+    focusable: false,
+    resizable: false,
+    // parent: win,
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.mjs'),
+    },
+  });
+
+  // Prevent closing this specific window, just hide it if needed
+  // persistentUiWin.on('close', (e) => {
+  //   e.preventDefault();
+  //   persistentUiWin?.hide(); 
+  // });
+
+  const targetUrl = VITE_DEV_SERVER_URL
+    ? path.join(VITE_DEV_SERVER_URL, 'persistent-ui')
+    : `file://${path.join(RENDERER_DIST, 'index.html')}#persistent-ui`;
+
+  // Load URL slightly differently for file protocol to include hash
+  persistentUiWin.loadURL(targetUrl).catch(err => {
+    console.error('Failed to load Persistent UI URL:', err);
+  });
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common
@@ -222,7 +273,11 @@ app.whenReady().then(() => {
   ipcMain.on('start-tutorial', () => {
     if (landingWin){
       landingWin.close()
+      landingWin = null; // Clear reference after closing
     }
+    // Show persistent UI after landing page is closed
+    persistentUiWin?.show();
+
     setTimeout(() => {
       // Call handleCapture and get the result
       handleCapture().then(result => {
@@ -266,4 +321,5 @@ app.whenReady().then(() => {
 
   createWindow()
   createLanding()
+  createAgentUiWindow() // Create the persistent UI window on startup
 })
