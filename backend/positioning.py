@@ -131,7 +131,7 @@ def process(img_bytes, feature, quadrant: str):
 
     # Generate bounding boxes
     resp = generate(img_bytes, feature)
-    # print(resp.text)
+    print(resp.text)
 
     try:
         # Parse the JSON response

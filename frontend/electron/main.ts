@@ -478,6 +478,6 @@ app.whenReady().then(() => {
 
   createWindow()
   createLanding()
-  createGhostPointWindow(30, 300, 'Initial description')
+  createGhostPointWindow(30, 300, 'Welcome to Ghost Guide!')
   createAgentUiWindow() // Create the persistent UI window on startup
 })
