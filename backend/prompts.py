@@ -12,8 +12,11 @@ Here is how the tutorial software works. You must identify which specific part o
 
 Next, you will write 1-2 sentences in a tutorial style that describes the checkpoint to help the user understand what to do. This can be along the lines of explaining the goal of an action the user should take, what specific thing the user needs to do, etc.
 
+Finally, also use the youtube video thumbnail and video frames at the checkpoint start to end ranges in order to determine the general area of the object that is being interacted with, or area that the screen is focused on/clicked on, etc. For this section, determine for "object_area" answer with either: "top-left", "top-right", "bottom-left", "bottom-right", or "center"
+
 Your output should be in the following format:
 {
+  "object_area": "",
   "checkpoint_description": "",
   "checkpoint_visual_description": ""
 }
