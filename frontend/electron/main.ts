@@ -29,7 +29,7 @@ let ghostWindow: BrowserWindow | null = null;
 function createWindow() {
   const primaryDisplay = screen.getPrimaryDisplay();
   const { width, height } = primaryDisplay.bounds;
-
+  console.log(width, height)
   win = new BrowserWindow({
     width: width,
     height: height,
