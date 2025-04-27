@@ -35,6 +35,7 @@ const GhostPoint: React.FC = () => {
             top: 50%;
             /* Remove transform, use margin to center perfectly */
             transform: translate(-50%, -50%);
+            opacity: 0.5;
             box-shadow: 0 0 3px 3px rgba(180,180,255,0.2);
             z-index: 2;
           }
@@ -58,7 +59,7 @@ const GhostPoint: React.FC = () => {
           @keyframes ghost-ring-expand {
             0% {
               transform: translate(-50%, -50%) scale(1);
-              opacity: 0.7;
+              opacity: 0.6;
             }
             60% {
               opacity: 0.5;
