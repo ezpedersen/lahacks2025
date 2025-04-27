@@ -3,8 +3,8 @@ from fastapi import Form, File, UploadFile, HTTPException
 from fastapi import FastAPI, Request
 from positioning import generate
 from utils import get_structured_transcript, extract_json_from_markdown, read_state, write_state
-from google import genai
-from google.generativeai import client
+from google import genai as google_genai # Rename to avoid conflict
+from groq import Groq # Import Groq SDK
 from prompts import parse_yt_prompt, checkpoint_prompt
 from pydantic import BaseModel
 import os
@@ -23,25 +23,63 @@ class CheckpointRequest(BaseModel):
 
 load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-client = genai.Client(api_key=GOOGLE_API_KEY)
+GROQ_API_KEY = os.getenv("GROQ_API_KEY") # Add Groq API Key env var
+
+CHECKPOINTS_DETAIL_FILE = "llm_transcript_output.json"
+PREPROCESSED_CHECKPOINTS_FILE = "checkpoints.json"
+
+# --- Clients ---
+try:
+    google_client = google_genai.Client(api_key=GOOGLE_API_KEY)
+    print("Google GenAI client initialized.")
+except Exception as e:
+    print(f"Error initializing Google GenAI client: {e}")
+    google_client = None
+
+try:
+    if not GROQ_API_KEY:
+        print("Warning: GROQ_API_KEY not found in environment variables. Groq client will not be initialized.")
+        groq_client = None
+    else:
+        groq_client = Groq(api_key=GROQ_API_KEY)
+        print("Groq client initialized.")
+except Exception as e:
+    print(f"Error initializing Groq client: {e}")
+    groq_client = None
 
 app = FastAPI()
 
 state = read_state()
-CHECKPOINTS_DETAIL_FILE = "llm_transcript_output.json"
-PREPROCESSED_CHECKPOINTS_FILE = "checkpoints.json"
 
 
 @app.post("/")
 async def root():
-    try:
-        response = client.models.generate_content(
-            model="gemini-2.0-flash", contents="What color is grass?"
-        )
-        return {"res": response.text}
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to process transcript: {str(e)}")
+    # Example: Test connectivity (could test both clients if initialized)
+    results = {}
+    if google_client:
+        try:
+            response = google_client.models.generate_content(
+                model="gemini-2.0-flash", contents="What color is the sky?"
+            )
+            results["google_test"] = response.text
+        except Exception as e:
+            results["google_test"] = f"Error: {e}"
+    else:
+        results["google_test"] = "Client not initialized."
+        
+    if groq_client:
+        try:
+            chat_completion = groq_client.chat.completions.create(
+                messages=[{"role": "user", "content": "Explain the concept of recursion in one sentence."}],
+                model="mixtral-8x7b-32768", # Example Groq model
+            )
+            results["groq_test"] = chat_completion.choices[0].message.content
+        except Exception as e:
+            results["groq_test"] = f"Error: {e}"
+    else:
+        results["groq_test"] = "Client not initialized."
+        
+    return results
 
 
 @app.post("/parse")
@@ -68,6 +106,10 @@ async def screenshot(file: UploadFile = File(...), prompt: str = Form(...), quad
 
 @app.post("/create-tutorial")
 async def create_tutorial():
+    # Use Groq if available, otherwise fallback or raise error
+    use_groq = bool(groq_client) # Simple switch, could be env var based
+    print(f"Processing /create-tutorial using {'Groq' if use_groq else 'Google GenAI'}")
+    
     print(f"Attempting to read checkpoint details from {CHECKPOINTS_DETAIL_FILE}")
     try:
         with open(CHECKPOINTS_DETAIL_FILE, 'r', encoding='utf-8') as f:
@@ -99,28 +141,51 @@ async def create_tutorial():
             time_end = str(checkpoint_info.get("time_end", "N/A"))
             checkpoint_info_str = json.dumps(checkpoint_info)
 
+            # Prepare the prompt content (remains the same)
             prompt_template = checkpoint_prompt
-            llm_prompt = prompt_template.replace(
+            llm_prompt_content = prompt_template.replace(
                 "{{analysis_summary}}", analysis_summary)
-            llm_prompt = llm_prompt.replace("{{checkpoint_info}}", checkpoint_info_str)
-            llm_prompt = llm_prompt.replace("{{time_start}}", time_start)
-            llm_prompt = llm_prompt.replace("{{time_end}}", time_end)
+            llm_prompt_content = llm_prompt_content.replace("{{checkpoint_info}}", checkpoint_info_str)
+            llm_prompt_content = llm_prompt_content.replace("{{time_start}}", time_start)
+            llm_prompt_content = llm_prompt_content.replace("{{time_end}}", time_end)
 
-            # Call Gemini API for this checkpoint
-            response = client.models.generate_content(
-                model='gemini-2.5-pro-exp-03-25',
-                contents=[llm_prompt]
-            )
-            data = extract_json_from_markdown(response.text)
+            llm_response_text = ""
+            if use_groq and groq_client:
+                 print(f"Calling Groq for checkpoint {i}...")
+                 chat_completion = groq_client.chat.completions.create(
+                     messages=[
+                         # You might want a system prompt here defining the task
+                         {"role": "system", "content": "You are an AI assistant analyzing tutorial checkpoints. Output JSON."},
+                         {"role": "user", "content": llm_prompt_content}
+                     ],
+                     model="llama3-70b-8192", # Example Groq model
+                     temperature=0.2, # Adjust parameters as needed
+                     # response_format={"type": "json_object"} # If supported by model/API
+                 )
+                 llm_response_text = chat_completion.choices[0].message.content
+                 print(f"Groq response received for checkpoint {i}.")
+            elif google_client:
+                 print(f"Calling Google GenAI for checkpoint {i}...")
+                 # --- Original Google GenAI Call ---
+                 response = google_client.models.generate_content(
+                     model='gemini-2.5-pro-exp-03-25',
+                     contents=[llm_prompt_content]
+                 )
+                 llm_response_text = response.text
+                 print(f"Google GenAI response received for checkpoint {i}.")
+                 # -----------------------------------
+            else:
+                raise Exception("No valid LLM client available.")
+
+            # Extract JSON (assuming similar format or adjust extraction logic)
+            data = extract_json_from_markdown(llm_response_text) # May need adjustment for Groq's output format
             processed_checkpoints_data.append(data)
             print(f"Successfully processed checkpoint {i}.")
             # Optional: Add a small delay if hitting API rate limits
-            # await asyncio.sleep(1) 
+            # await asyncio.sleep(0.1) # Shorter delay maybe
 
         except Exception as e:
             print(f"Error processing checkpoint {i}: {e}")
-            # Decide how to handle errors: skip, use placeholder, or fail fast?
-            # Option: Use a placeholder
             processed_checkpoints_data.append({"error": f"Failed to process checkpoint {i}: {str(e)}", "checkpoint_ui_element": "Error processing"})
             # Option: Fail fast (uncomment to enable)
             # raise HTTPException(
@@ -138,7 +203,7 @@ async def create_tutorial():
          print(f"Error preparing pre-processed data for JSON serialization: {e}")
          raise HTTPException(status_code=500, detail="Failed to serialize processed checkpoint data.")
 
-    return {"message": f"Successfully pre-processed {len(processed_checkpoints_data)} checkpoints.", "output_file": PREPROCESSED_CHECKPOINTS_FILE}
+    return {"message": f"Successfully pre-processed {len(processed_checkpoints_data)} checkpoints using {'Groq' if use_groq else 'Google GenAI'}.", "output_file": PREPROCESSED_CHECKPOINTS_FILE}
 
 
 @app.post("/next-checkpoint")
@@ -194,16 +259,43 @@ async def next_checkpoint(request: CheckpointRequest):
 
 @app.post("/transcript")
 async def transcript(request: TranscriptRequest):
+    # Use Groq if available, otherwise fallback or raise error
+    use_groq = bool(groq_client)
+    print(f"Processing /transcript for {request.url} using {'Groq' if use_groq else 'Google GenAI'}")
+
     try:
         transcript_data = get_structured_transcript(request.url)
-        prompt = parse_yt_prompt + str(transcript_data)
+        # Prepare the user prompt content
+        user_prompt_content = parse_yt_prompt + str(transcript_data)
 
-        response = client.models.generate_content(
-            model="gemini-2.5-pro-exp-03-25",
-            contents=prompt
-        )
+        llm_output_text = ""
+        if use_groq and groq_client:
+            print("Calling Groq for transcript analysis...")
+            chat_completion = groq_client.chat.completions.create(
+                messages=[
+                    {"role": "system", "content": "You are an AI assistant skilled in analyzing YouTube tutorial transcripts. Output JSON."},
+                    {"role": "user", "content": user_prompt_content}
+                ],
+                model="mixtral-8x7b-32768", # Example Groq model
+                temperature=0.1,
+                # response_format={"type": "json_object"} # If supported
+            )
+            llm_output_text = chat_completion.choices[0].message.content
+            print("Groq response received.")
+        elif google_client:
+             print("Calling Google GenAI for transcript analysis...")
+             # --- Original Google GenAI Call ---
+             response = google_client.models.generate_content(
+                 model="gemini-2.5-pro-exp-03-25",
+                 contents=user_prompt_content # Pass the combined prompt directly
+             )
+             llm_output_text = response.text
+             print("Google GenAI response received.")
+             # -----------------------------------
+        else:
+             raise Exception("No valid LLM client available.")
 
-        llm_output_text = response.text
+        # Extract JSON - This function might need adjustments based on Groq's typical output format
         llm_output_json = extract_json_from_markdown(llm_output_text)
 
         # Save the structured transcript output (needed by /create-tutorial)
@@ -216,6 +308,7 @@ async def transcript(request: TranscriptRequest):
         except TypeError as e:
             print(f"Error preparing LLM output for JSON serialization: {e}")
 
+        # Update state
         new_num_checkpoints = len(llm_output_json.get("checkpoints", []))
         print(
             f"Transcript processed. Number of checkpoints: {new_num_checkpoints}")
@@ -237,13 +330,12 @@ async def transcript(request: TranscriptRequest):
             except OSError as e:
                 print(f"Error removing stale {PREPROCESSED_CHECKPOINTS_FILE}: {e}")
 
-
         return {"res": llm_output_json}
 
     except Exception as e:
         print(f"Error processing transcript for {request.url}: {e}")
         raise HTTPException(
-            status_code=500, detail=f"Failed to process transcript: {str(e)}")
+            status_code=500, detail=f"Failed to process transcript using {'Groq' if use_groq else 'Google GenAI'}: {str(e)}")
 
 
 if __name__ == "__main__":
