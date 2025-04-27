@@ -2,6 +2,7 @@ import { useState} from 'react';
 import Hero from './Hero';
 import PromptInput from './PromptInput';
 import QuickActions from './QuickActions';
+import CartoonSpeechBubble from './CartoonSpeechBubble';
 
 
 function Landing() {
@@ -28,6 +29,7 @@ function Landing() {
             <QuickActions />
             <div className="flex-1 overflow-hidden">
               {/* <CommunityProjects /> */}
+              {/* <CartoonSpeechBubble>Dim down the glowing a bit and also click on the kdjfdlksfjlsd jfdk Dim down the glowing a</CartoonSpeechBubble> */}
             </div>
           </div>
         </main>
