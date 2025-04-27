@@ -72,10 +72,27 @@ def scaled_coords(box: list, image_size: Tuple[int, int]):
     return (x, y, x + w, y + h)
 
 
-def process(bytes, feature):
+def process(img_bytes, feature, quadrant):
     # Open the image
     image = Image.open(io.BytesIO(img_bytes)).convert("RGBA")
     original_width, original_height = image.size
+    (from_row, to_row), (from_col, to_col) = quadrant
+    if from_row == -1:
+        from_row = 0
+    if to_row == -1:
+        to_row = original_height
+    if from_col == -1:
+        from_col = 0
+    if to_col == -1:
+        to_col = original_width
+    crop_offset_x = from_col
+    crop_offset_y = from_row
+    image = image.crop((from_col, from_row, to_col, to_row))
+    # Update img_bytes to be the cropped image bytes
+    buf = io.BytesIO()
+    image.show()
+    image.save(buf, format="PNG")
+    img_bytes = buf.getvalue()
     print(f"Original image size: {original_width}x{original_height}")
 
     # Scale the image
@@ -106,17 +123,20 @@ def process(bytes, feature):
         box = item.get("box_2d")
         if box and len(box) == 4:
             # Normalize coordinates
-            x1, y1, x2, y2 = scaled_coords(box, (scaled_width, scaled_height))
+            scaled = scaled_coords(box, (scaled_width, scaled_height))
 
-            processed = [x1, y1, x2, y2]
-            return [int(x/scale) for x in processed]
+            x1, y1, x2, y2 = [int(x/scale) for x in scaled]
+
+            return [x1+crop_offset_x, y1+crop_offset_y, x2+crop_offset_x, y2+crop_offset_y]
     return []
 
 
 if __name__ == "__main__":
     # Read image bytes directly
-    with open("./example3.png", "rb") as f:
+    with open("./example.png", "rb") as f:
         img_bytes = f.read()
+    feature = "gear settings button"
+    quadrant = [[0, 400], [1600, -1]]
 
     # Create a new image for drawing
     draw_image = Image.open(io.BytesIO(img_bytes)).convert("RGBA")
@@ -126,8 +146,8 @@ if __name__ == "__main__":
     # Draw bounding boxes
 
     # Convert back to pixel coordinates for drawing
-    feature = "gear settings button"
-    x1, y1, x2, y2 = process(img_bytes, feature)
+
+    x1, y1, x2, y2 = process(img_bytes, feature, quadrant)
     print(x1, y1, x2, y2)
     # Draw the rectangle
     draw.rectangle([x1, y1, x2, y2], outline="red", width=4)
