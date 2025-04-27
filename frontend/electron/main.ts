@@ -130,6 +130,7 @@ function createGhostPointWindow(x: number, y: number, description: string) {
   ghostPointWindow.webContents.on('did-finish-load', () => {
     console.log(`Sending description to GhostPointWindow: "${description}"`);
     ghostPointWindow?.webContents.send('set-ghost-message', description);
+   
   });
 
   if (VITE_DEV_SERVER_URL) {
@@ -270,7 +271,8 @@ const handleCapture = async (prompt: string, description: string) => {
           // --- Add Ghost Point Window creation here ---
           if (data && typeof data.x === 'number' && typeof data.y === 'number') {
             console.log(`Received coordinates: x=${data.x}, y=${data.y}. Creating GhostPointWindow.`);
-            createGhostPointWindow(data.x, data.y, description);
+            // createGhostPointWindow(data.x, data.y, description);
+            ghostPointWindow?.webContents.send('set-ghost-point-position', {"left": `${data.x}px`, "right": `${data.y}px`});
           } else {
             console.warn('Backend response did not contain valid x/y coordinates for GhostPointWindow.', data);
           }
@@ -504,15 +506,26 @@ app.whenReady().then(() => {
 
   createWindow()
   createLanding()
-  createAgentUiWindow() // Create the persistent UI window on startup
+  createGhostPointWindow(30, 300, 'Initial description')
+  // createAgentUiWindow() // Create the persistent UI window on startup
 
-  // TEST: After 3 seconds, move the ghost point to a new position
-  setTimeout(() => {
-    ghostPointPosition = { left: '60%', top: '40%' };
-    if (ghostPointWindow) {
-      ghostPointWindow.webContents.send('set-ghost-point-position', ghostPointPosition);
-      ghostPointWindow.webContents.send('set-ghost-message', 'Test: Ghost moved to a new position!');
-      console.log('Test: Sent new ghost point position and message via IPC (ghostPointWindow only)');
-    }
-  }, 3000);
+  // // TEST: After 3 seconds, move the ghost point to a new position
+  // setTimeout(() => {
+  //   ghostPointPosition = { left: '60%', top: '40%' };
+  //   if (ghostPointWindow) {
+  //     ghostPointWindow.webContents.send('set-ghost-point-position', ghostPointPosition);
+  //     ghostPointWindow.webContents.send('set-ghost-message', 'Test: Ghost moved to a new position!');
+  //     console.log('Test: Sent new ghost point position and message via IPC (ghostPointWindow only)');
+  //   }
+  // }, 3000);
+
+  // // TEST: After 6 seconds, move the ghost point to another new position
+  // setTimeout(() => {
+  //   ghostPointPosition = { left: '20px', top: '70px' };
+  //   if (ghostPointWindow) {
+  //     ghostPointWindow.webContents.send('set-ghost-point-position', ghostPointPosition);
+  //     ghostPointWindow.webContents.send('set-ghost-message', 'Test: Ghost moved to a second new position!');
+  //     console.log('Test: Sent second new ghost point position and message via IPC (ghostPointWindow only)');
+  //   }
+  // }, 6000);
 })

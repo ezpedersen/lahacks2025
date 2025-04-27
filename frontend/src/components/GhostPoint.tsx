@@ -12,6 +12,7 @@ const GhostPoint: React.FC = () => {
   useEffect(() => {
     // Handler for IPC event
     const handleSetGhostPointPosition = (_event: unknown, newPosition: { left: string; top: string }) => {
+      alert("HANDLING NEW POSITION")
       if (
         newPosition &&
         typeof newPosition.left === 'string' &&
