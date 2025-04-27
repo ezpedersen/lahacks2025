@@ -95,7 +95,7 @@ function createLanding() {
     landingWin.loadFile(path.join(RENDERER_DIST, 'index.html'), { hash: '/ghost' });
   }
 }
-function createGhostPointWindow() {
+function createGhostPointWindow(x: number, y: number, description: string) {
   if (ghostPointWindow) {
     ghostPointWindow.close();
   }
@@ -118,12 +118,19 @@ function createGhostPointWindow() {
     show: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
-      nodeIntegration: true,
-      contextIsolation: false
+      nodeIntegration: false,
+      contextIsolation: true
     }
   });
   // Allow mouse events to pass through transparent areas, but still receive clicks on opaque content
   ghostPointWindow.setIgnoreMouseEvents(true, { forward: true });
+
+  // Send the description to the window *after* it finishes loading
+  ghostPointWindow.webContents.on('did-finish-load', () => {
+    console.log(`Sending description to GhostPointWindow: "${description}"`);
+    ghostPointWindow?.webContents.send('set-ghost-message', description);
+  });
+
   if (VITE_DEV_SERVER_URL) {
     ghostPointWindow.loadURL(path.join(VITE_DEV_SERVER_URL, 'ghostpoint'));
   } else {
@@ -195,8 +202,8 @@ app.on('activate', () => {
   }
 })
 
-// Modify handleCapture to accept prompt and call createGhostPointWindow
-const handleCapture = async (prompt: string) => {
+// Modify handleCapture to accept prompt AND description, and pass description to createGhostPointWindow
+const handleCapture = async (prompt: string, description: string) => {
     try {
       console.log('Capturing entire screen...');
     
@@ -262,7 +269,7 @@ const handleCapture = async (prompt: string) => {
           // --- Add Ghost Point Window creation here ---
           if (data && typeof data.x === 'number' && typeof data.y === 'number') {
             console.log(`Received coordinates: x=${data.x}, y=${data.y}. Creating GhostPointWindow.`);
-            createGhostPointWindow(data.x, data.y);
+            createGhostPointWindow(data.x, data.y, description);
           } else {
             console.warn('Backend response did not contain valid x/y coordinates for GhostPointWindow.', data);
           }
@@ -310,24 +317,41 @@ app.whenReady().then(() => {
       const checkpointData = await checkpointResponse.json();
       console.log('Received checkpoint data:', checkpointData);
 
-      // --- Safely extract checkpoint_ui_element --- 
+      // --- Safely extract checkpoint_ui_element AND checkpoint_description ---
       let promptForCapture = 'Default UI element prompt'; // Fallback prompt
-      if (checkpointData && checkpointData.res && typeof checkpointData.res === 'object' && checkpointData.res.checkpoint_ui_element) {
-        promptForCapture = checkpointData.res.checkpoint_ui_element;
-        console.log(`Extracted UI element for prompt: ${promptForCapture}`);
+      let descriptionForGhost = 'Loading description...'; // Default description
+      if (checkpointData && checkpointData.res && typeof checkpointData.res === 'object') {
+         if (checkpointData.res.checkpoint_ui_element) {
+            promptForCapture = checkpointData.res.checkpoint_ui_element;
+            console.log(`Extracted UI element for prompt: ${promptForCapture}`);
+         } else {
+            console.warn('Could not find checkpoint_ui_element in response, using default prompt.', checkpointData.res);
+         }
+
+         if (checkpointData.res.checkpoint_description) {
+            descriptionForGhost = checkpointData.res.checkpoint_description;
+            console.log(`Extracted checkpoint description: ${descriptionForGhost}`);
+         } else {
+            console.warn('Could not find checkpoint_description in response, using default description.', checkpointData.res);
+         }
+
       } else {
-        console.warn('Could not find checkpoint_ui_element in response, using default.', checkpointData);
+        console.warn('Could not find checkpoint data (res object) in response, using defaults.', checkpointData);
         // Optionally, handle the case where the tutorial might be complete
         if (checkpointData && checkpointData.res && typeof checkpointData.res === 'string' && checkpointData.res.includes('Tutorial complete')) {
            console.log('Tutorial finished.');
            // Potentially notify the user or stop further captures
+           // Close the ghost window if it exists
+           if (ghostPointWindow) {
+             ghostPointWindow.close();
+           }
            return; // Stop processing if tutorial is done
         }
       }
-      // --- End extraction --- 
+      // --- End extraction ---
 
-      // 2. Call handleCapture with the extracted UI element description
-      await handleCapture(promptForCapture);
+      // 2. Call handleCapture with the extracted UI element description AND the checkpoint description
+      await handleCapture(promptForCapture, descriptionForGhost); // Pass both prompt and description
       console.log(`Called handleCapture with prompt: ${promptForCapture}`);
 
       // --- Increment checkpoint number ONLY after successful fetch and capture ---
@@ -454,6 +478,6 @@ app.whenReady().then(() => {
 
   createWindow()
   createLanding()
-  createGhostPointWindow()
+  createGhostPointWindow(30, 300, 'Initial description')
   createAgentUiWindow() // Create the persistent UI window on startup
 })
