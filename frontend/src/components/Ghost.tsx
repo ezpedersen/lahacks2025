@@ -20,7 +20,7 @@ const Ghost: React.FC = () => {
         src={GhostSvg} 
         alt="icon" 
         style={{
-          height: '100px',
+          height: '80px',
           width: 'auto',
           display: 'block',
           transform: 'scaleX(-1)', // Flip image horizontally
