@@ -30,9 +30,9 @@ let currentCheckpointNumber = 0; // Add state for checkpoint number (initialized
 
 // Hardcoded data for the demo checkpoints
 const demoCheckpoints = [
-  { x: 500, y: 500, description: "Click the Green \"Add to Cart button twice to active the color panel" },
-  { x: 600, y: 600, description: "Navigate to the primary text and click that button to open the color options" },
-  { x: 500, y: 550, description: "Click the Selected-Violet Options to change the color" }
+  { x: 700, y: 700, description: "Click the Green \"Add to Cart button twice to active the color panel" },
+  { x: 1200, y: 480, description: "Navigate to the primary text and click that button to open the color options" },
+  { x: 1000, y: 630, description: "Click the Select BG-Violet Options to change the color" }
 ];
 
 function createWindow() {
