@@ -131,8 +131,8 @@ function createGhostPointWindow(x: number, y: number) {
   ghostPointWindow = new BrowserWindow({
     width: 50,
     height: 50,
-    x: x,
-    y: y,
+    x: x-25,
+    y: y-25,
     frame: false,
     alwaysOnTop: true,
     skipTaskbar: true,
