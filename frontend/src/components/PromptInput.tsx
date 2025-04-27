@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Paperclip, Plus, Youtube, Eye, Play, Loader2 } from 'lucide-react';
 import { useTypingEffect } from '../hooks/useTypingEffect';
+import { MultiStepLoader } from './ui/multi-step-loader';
+
+// Define loading states for analysis
+const analysisLoadingStates = [
+  { text: "Analyzing Youtube Video" },
+  { text: "Parsing Transcript" },
+  { text: "Searching Web" }, // Assuming this is part of the process
+  { text: "Creating Checkpoints" },
+];
 
 interface PromptInputProps {
   prompt: string;
@@ -59,6 +68,9 @@ const PromptInput: React.FC<PromptInputProps> = ({ prompt, setPrompt }) => {
   return (
     <div className="w-11/12 md:w-9/12 lg:w-7/12 xl:w-6/12 max-w-2xl mx-auto mb-8">
       <div className="relative">
+        {/* Multi-step loader for analysis */}
+        <MultiStepLoader loadingStates={analysisLoadingStates} loading={isAnalyzing} duration={1500} />
+        
         {/* Border animation container */}
         {isFocused && (
           <div className="absolute -inset-[3px] rounded-lg animate-border-flow z-0" />
@@ -96,12 +108,8 @@ const PromptInput: React.FC<PromptInputProps> = ({ prompt, setPrompt }) => {
                 onClick={handleAnalyzeTutorial}
                 disabled={isProcessing}
               >
-                {isAnalyzing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Play className="h-4 w-4" />
-                )}
-                <span>{isAnalyzing ? 'Analyzing...' : 'Analyze Tutorial'}</span>
+                <Play className="h-4 w-4" />
+                <span>Analyze Tutorial</span>
               </button>
               <button
                 className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
