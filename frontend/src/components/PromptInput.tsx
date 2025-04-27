@@ -3,13 +3,13 @@ import { Paperclip, Plus, Youtube, Eye, Play, Loader2 } from 'lucide-react';
 import { useTypingEffect } from '../hooks/useTypingEffect';
 import { MultiStepLoader } from './ui/multi-step-loader';
 
-// Define loading states for analysis
-const analysisLoadingStates = [
+const creationLoadingStates = [
   { text: "Analyzing Youtube Video" },
   { text: "Parsing Transcript" },
-  { text: "Searching Web" }, // Assuming this is part of the process
+  { text: "Searching Web" }, 
   { text: "Creating Checkpoints" },
 ];
+
 
 interface PromptInputProps {
   prompt: string;
@@ -68,8 +68,8 @@ const PromptInput: React.FC<PromptInputProps> = ({ prompt, setPrompt }) => {
   return (
     <div className="w-11/12 md:w-9/12 lg:w-7/12 xl:w-6/12 max-w-2xl mx-auto mb-8">
       <div className="relative">
-        {/* Multi-step loader for analysis */}
-        <MultiStepLoader loadingStates={analysisLoadingStates} loading={isAnalyzing} duration={1500} />
+        {/* Multi-step loader for creation */}
+        <MultiStepLoader loadingStates={creationLoadingStates} loading={isCreating} duration={1500} />
         
         {/* Border animation container */}
         {isFocused && (
