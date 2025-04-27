@@ -95,25 +95,27 @@ function createLanding() {
     landingWin.loadFile(path.join(RENDERER_DIST, 'index.html'), { hash: '/ghost' });
   }
 }
-function createGhostPointWindow(x: number, y: number) {
+function createGhostPointWindow() {
   if (ghostPointWindow) {
     ghostPointWindow.close();
   }
   if (!win){return}
-  const w = 600
-  const h = 600
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width, height } = primaryDisplay.bounds;
+  console.log(width, height)
   ghostPointWindow = new BrowserWindow({
-    
-    width: w,
-    height: h,
-    x: x - 30,
-    y: y - Math.floor(h / 2),
+    width: width,
+    height: height,
+    x: 0,
+    y: 0,
     frame: false,
     alwaysOnTop: true,
     skipTaskbar: true,
     resizable: false,
     transparent: true, // Make background transparent
     parent: win,
+    focusable: false,
+    show: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       nodeIntegration: true,
@@ -452,6 +454,6 @@ app.whenReady().then(() => {
 
   createWindow()
   createLanding()
-  createGhostPointWindow(30, 300)
+  createGhostPointWindow()
   createAgentUiWindow() // Create the persistent UI window on startup
 })

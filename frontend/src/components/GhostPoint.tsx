@@ -1,7 +1,25 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import Ghost from './Ghost';
 
+const DEFAULT_POSITION = { left: '47%', top: '13.5%' };
+const TARGET_POSITION = { left: '70%', top: '60%' }; // Example new location
+
 const GhostPoint: React.FC = () => {
+  const [position, setPosition] = useState(DEFAULT_POSITION);
+  const [transitioning, setTransitioning] = useState(false);
+  const dotRef = useRef<HTMLDivElement>(null);
+
+  // Example: Move to new location after 1s (for demo)
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setTransitioning(true);
+      setPosition(TARGET_POSITION);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Optionally, you can expose setPosition for external control
+
   return (
     <div
       className="ghost-point-bg"
@@ -13,6 +31,7 @@ const GhostPoint: React.FC = () => {
         alignItems: 'center',
         background: 'transparent',
         overflow: 'hidden',
+        position: 'relative',
       }}
     >
       <style>
@@ -33,7 +52,6 @@ const GhostPoint: React.FC = () => {
             position: absolute;
             left: 50%;
             top: 50%;
-            /* Remove transform, use margin to center perfectly */
             transform: translate(-50%, -50%);
             opacity: 0.5;
             box-shadow: 0 0 3px 3px rgba(180,180,255,0.2);
@@ -69,9 +87,22 @@ const GhostPoint: React.FC = () => {
               opacity: 0;
             }
           }
+          .ghost-point-animated {
+            transition: left 0.8s cubic-bezier(0.4,0,0.2,1), top 0.8s cubic-bezier(0.4,0,0.2,1);
+            will-change: left, top;
+          }
         `}
       </style>
-      <div style={{ position: 'absolute', left: '30px', top: "50%", transform: 'translate(-50%, -50%)' }}>
+      <div
+        ref={dotRef}
+        className="ghost-point-animated"
+        style={{
+          position: 'absolute',
+          left: position.left,
+          top: position.top,
+          transform: 'translate(-50%, -50%)',
+        }}
+      >
         <div className="ghost-dot-center" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div className="ghost-ring" />
           <div className="ghost-ring ring2" />

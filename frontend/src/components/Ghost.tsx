@@ -29,6 +29,7 @@ const Ghost: React.FC = () => {
         }} 
       />
       <div
+      // className='hidden'
         style={{
           position: 'absolute',
           left: '10px', // right next to the ghost SVG
