@@ -384,14 +384,16 @@ app.whenReady().then(() => {
       return response.json();
     })
     .then(data => {
-      console.log('Received response from /transcript:', data); 
+      console.log('Received response from /transcript:', data);
       // TODO: Handle the response data (e.g., show first checkpoint)
       // Reset checkpoint counter when a new tutorial starts
-      currentCheckpointNumber = -1; 
+      currentCheckpointNumber = -1;
       console.log('Tutorial started, checkpoint number reset to -1.');
+      event.reply('tutorial-analyzed', { success: true }); // Notify renderer
     })
     .catch(error => {
       console.error('Error calling /transcript endpoint:', error);
+      event.reply('tutorial-analyzed', { success: false, error: error.message }); // Notify renderer about error
     });
     
     // Remove old setTimeout logic
