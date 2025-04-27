@@ -90,7 +90,7 @@ def process(img_bytes, feature, quadrant):
     image = image.crop((from_col, from_row, to_col, to_row))
     # Update img_bytes to be the cropped image bytes
     buf = io.BytesIO()
-    image.show()
+    # image.show()
     image.save(buf, format="PNG")
     img_bytes = buf.getvalue()
     print(f"Original image size: {original_width}x{original_height}")

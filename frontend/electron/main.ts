@@ -163,10 +163,10 @@ const handleCapture = async () => {
         
         try {
           const formData = new FormData();
-          formData.append('prompt', 'Click the Help button at the top of the screen');
+          formData.append('prompt', 'the gear button');
           const screenshotBlob = new Blob([entireScreen.thumbnail.toPNG()], { type: 'image/png' });
           formData.append('file', screenshotBlob, 'screenshot.png');
-          // formData.append('quadrant', JSON.stringify([[0, 500], [700, -1]]));
+          formData.append('quadrant', JSON.stringify([[0, 500], [1400, -1]]));
 
           // Save the screenshot to disk for debugging
           const fs = await import('fs');
@@ -225,6 +225,7 @@ app.whenReady().then(() => {
     setTimeout(() => {
       // Call handleCapture and get the result
       handleCapture().then(result => {
+        console.log(result.data.x, result.data.y)
         if (result && result.success && typeof result.data.x === 'number' && typeof result.data.y === 'number') {
           createGhostWindow(result.data.x, result.data.y);
         } 

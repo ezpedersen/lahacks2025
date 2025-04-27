@@ -11,17 +11,19 @@ async def parse_url(url_input: str):
 
 
 @app.post("/screen")
-async def screenshot(file: UploadFile = File(...), prompt: str = Form(...)):
-    # import json
-    # quadrant = json.loads(quadrant)
-    quadrant = [[0, 500], [700, -1]]
+async def screenshot(file: UploadFile = File(...), prompt: str = Form(...), quadrant: str = Form(...)):
+    import json
+    quadrant = json.loads(quadrant)
+    # quadrant = [[0, 500], [1400, -1]]
     image = await file.read()
     response = process(image, prompt, quadrant)
+    print(response)
     # Parse the JSON string into a Python dictionary
     import json
-    json_str = "{" + response.text.split("{")[1].split("}")[0] + "}"
-    result = json.loads(json_str)
-    print(result)  # This will print the actual dictionary
+    # json_str = "{" + response.text.split("{")[1].split("}")[0] + "}"
+    result = {"x": int((response[0]+response[2])/2),
+              "y": int((response[1]+response[3])/2)}
+    # print(result)  # This will print the actual dictionary
     return result
 
 
