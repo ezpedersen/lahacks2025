@@ -28,6 +28,13 @@ let ghostPointWindow: BrowserWindow | null
 let persistentUiWin: BrowserWindow | null = null;
 let currentCheckpointNumber = 0; // Add state for checkpoint number (initialized to -1)
 
+// Hardcoded data for the demo checkpoints
+const demoCheckpoints = [
+  { x: 500, y: 500, description: "Click the Green \"Add to Cart button twice to active the color panel" },
+  { x: 600, y: 600, description: "Navigate to the primary text and click that button to open the color options" },
+  { x: 500, y: 550, description: "Click the Selected-Violet Options to change the color" }
+];
+
 function createWindow() {
   const primaryDisplay = screen.getPrimaryDisplay();
   const { width, height } = primaryDisplay.bounds;
@@ -132,9 +139,15 @@ function createGhostPointWindow(x: number, y: number, description: string) {
   });
 
   if (VITE_DEV_SERVER_URL) {
-    ghostPointWindow.loadURL(path.join(VITE_DEV_SERVER_URL, 'ghostpoint'));
+    // Pass coordinates in the hash for dev server
+    const hash = `#x=${x}&y=${y}`;
+    ghostPointWindow.loadURL(path.join(VITE_DEV_SERVER_URL, 'ghostpoint') + hash);
   } else {
-    ghostPointWindow.loadFile(path.join(RENDERER_DIST, 'index.html'), { hash: '/ghostpoint' });
+    // Pass coordinates in the hash for production build
+    const hash = `ghostpoint?x=${x}&y=${y}` // Use query params for file protocol hash
+    ghostPointWindow.loadFile(path.join(RENDERER_DIST, 'index.html'), { hash: `/ghostpoint#x=${x}&y=${y}` });
+    // ghostPointWindow.loadFile(path.join(RENDERER_DIST, 'index.html'), { hash: `ghostpoint#x=${x}&y=${y}` });
+    // ghostPointWindow.loadFile(path.join(RENDERER_DIST, 'index.html'), { hash: hash});
   }
 }
 function createAgentUiWindow() {
@@ -296,10 +309,32 @@ app.whenReady().then(() => {
 
   // Add the new handler for next-checkpoint-and-capture
   ipcMain.on('next-checkpoint-and-capture', async () => {
-    // Calculate the checkpoint number to fetch (current + 1)
-    const checkpointToFetch = currentCheckpointNumber + 1; 
-    console.log(`CMD+9 received. Attempting to fetch checkpoint ${checkpointToFetch} and capture screen.`);
+    // Calculate the checkpoint index based on the current number
+    const checkpointIndex = currentCheckpointNumber + 1; 
+    console.log(`CMD+9 received. Attempting to show demo checkpoint ${checkpointIndex}.`);
 
+    // Check if the requested checkpoint index is within our demo data
+    if (checkpointIndex >= 0 && checkpointIndex < demoCheckpoints.length) {
+      const demoData = demoCheckpoints[checkpointIndex];
+      console.log(`Showing demo checkpoint ${checkpointIndex}: x=${demoData.x}, y=${demoData.y}, description="${demoData.description}"`);
+
+      // Directly create the ghost point window with hardcoded data
+      createGhostPointWindow(demoData.x, demoData.y, demoData.description);
+
+      // Increment the checkpoint number for the next click
+      currentCheckpointNumber = checkpointIndex;
+      console.log(`Successfully showed demo checkpoint, updated currentCheckpointNumber to: ${currentCheckpointNumber}`);
+    } else {
+      console.log(`Demo sequence finished. Requested checkpoint index ${checkpointIndex} is out of bounds.`);
+      // Optional: Close the ghost window or provide feedback that the demo is over
+       if (ghostPointWindow) {
+         ghostPointWindow.close();
+         ghostPointWindow = null; 
+         console.log('Closed ghost point window as demo sequence ended.');
+       }
+    }
+
+    /* // Original fetch and capture logic commented out
     try {
       // 1. Fetch next checkpoint details from backend using checkpointToFetch
       const checkpointResponse = await fetch('http://localhost:8000/next-checkpoint', {
@@ -363,13 +398,24 @@ app.whenReady().then(() => {
       console.error('Error in next-checkpoint-and-capture handler:', error);
       // Do not increment checkpoint number on error
     }
+    */
   });
 
   // Modify start-tutorial handler to fetch /transcript
   ipcMain.on('start-tutorial', (event, prompt: string) => { 
+    console.log(`Received start-tutorial for: ${prompt}. Simulating analysis...`);
 
+    // Simulate API call delay
+    setTimeout(() => {
+      console.log('Simulated analysis finished.');
+      // Reset checkpoint counter when a new tutorial starts (or simulated start)
+      currentCheckpointNumber = -1;
+      console.log('Tutorial started (simulated), checkpoint number reset to -1.');
+      event.reply('tutorial-analyzed', { success: true }); // Notify renderer of success
+    }, 3000); // 3 second delay
 
-    // Send the prompt (assumed URL) to the backend /transcript endpoint
+    // Comment out the actual API call
+    /*
     fetch('http://localhost:8000/transcript', {
       method: 'POST',
       headers: {
@@ -395,8 +441,9 @@ app.whenReady().then(() => {
       console.error('Error calling /transcript endpoint:', error);
       event.reply('tutorial-analyzed', { success: false, error: error.message }); // Notify renderer about error
     });
+    */
     
-    // Remove old setTimeout logic
+    // Remove old setTimeout logic (already commented out, keeping for reference)
     /* setTimeout(() => {
       handleCapture(prompt).then(result => {
         console.log(result.data.x, result.data.y)
@@ -410,36 +457,43 @@ app.whenReady().then(() => {
     
   });
 
-  // Add the listener for resizing the ghost window
-  // ipcMain.on('resize-ghost-window', (event, size) => {
-  //   if (ghostWindow && !ghostWindow.isDestroyed() && size && typeof size.width === 'number' && typeof size.height === 'number') {
-  //     console.log(`Resizing ghost window to ${size.width}x${size.height}`);
-  //     // Ensure integers and minimum size
-  //     const width = Math.max(1, Math.ceil(size.width));
-  //     const height = Math.max(1, Math.ceil(size.height));
-
-  //     try {
-  //       // Set size first
-  //       ghostWindow.setSize(width, height, false); // Set false for animation if desired
-
-  //       // You might adjust position slightly here if 'x, y' was meant to be the center
-  //       // For example:
-  //       // const originalPos = ghostWindow.getPosition();
-  //       // ghostWindow.setPosition(originalPos[0] - Math.floor(width / 2), originalPos[1] - Math.floor(height / 2));
-
-  //       // Then show the window
-  //       ghostWindow.show();
-  //     } catch (error) {
-  //        console.error('Error resizing or showing ghost window:', error);
-  //     }
-  //   } else {
-  //      console.warn('Received invalid resize request or ghost window is gone.');
-  //   }
-  // });
-
   // Add the handler for process-checkpoints
   ipcMain.handle('process-checkpoints', async () => {
-    console.log('Received process-checkpoints request. Calling backend /create-tutorial...');
+    console.log('Received process-checkpoints request. Simulating backend processing...');
+
+    // Simulate the backend call and UI changes
+    return new Promise((resolve) => {
+      console.log('Starting 10-second simulation for checkpoint processing...');
+      setTimeout(() => {
+        console.log('Simulated checkpoint processing finished.');
+
+        // Reset checkpoint number for the demo sequence start
+        currentCheckpointNumber = -1;
+        console.log('Reset currentCheckpointNumber to -1 for demo start.');
+
+        // Close landing page if it exists
+        if (landingWin) {
+          landingWin.close();
+          landingWin = null; // Clear reference after closing
+          console.log('Closed landing window.');
+        } else {
+           console.log('Landing window already closed or not found.');
+        }
+
+        // Show persistent UI if it exists
+        if (persistentUiWin) {
+           persistentUiWin.show();
+           console.log('Showed persistent UI window.');
+        } else {
+            console.log('Persistent UI window not found.');
+        }
+
+        // Resolve the handler promise with success
+        resolve({ success: true, message: 'Simulated checkpoint processing complete.' });
+      }, 10000); // 10 second delay
+    });
+
+    /* // Original fetch call commented out
     try {
       const response = await fetch('http://localhost:8000/create-tutorial', {
         method: 'POST',
@@ -474,6 +528,7 @@ app.whenReady().then(() => {
       // win?.webContents.send('checkpoints-processed', { success: false, message: error.message });
       return { success: false, message: `Failed to process checkpoints: ${error.message}` };
     }
+    */
   });
 
   createWindow()

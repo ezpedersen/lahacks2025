@@ -1,15 +1,44 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Ghost from './Ghost';
 
-const DEFAULT_POSITION = { left: '47%', top: '13.5%' };
-const TARGET_POSITION = { left: '70%', top: '60%' }; // Example new location
+// Default position if hash params are missing or invalid
+const FALLBACK_POSITION = { left: '50%', top: '50%' }; 
 
 const GhostPoint: React.FC = () => {
-  const [position, setPosition] = useState(DEFAULT_POSITION);
+  // Initialize state with fallback, update from hash in useEffect
+  const [position, setPosition] = useState(FALLBACK_POSITION);
   const [transitioning, setTransitioning] = useState(false);
   const dotRef = useRef<HTMLDivElement>(null);
 
-  // Example: Move to new location after 1s (for demo)
+  useEffect(() => {
+    // Function to parse hash parameters
+    const getHashParams = () => {
+      const hash = window.location.hash.substring(1); // Remove leading #
+      const params = new URLSearchParams(hash);
+      const x = params.get('x');
+      const y = params.get('y');
+      return { x, y };
+    };
+
+    const params = getHashParams();
+    const xCoord = params.x ? parseInt(params.x, 10) : null;
+    const yCoord = params.y ? parseInt(params.y, 10) : null;
+
+    console.log(`GhostPoint received hash params: x=${params.x}, y=${params.y}`);
+
+    // Update position state if coordinates are valid numbers
+    if (xCoord !== null && !isNaN(xCoord) && yCoord !== null && !isNaN(yCoord)) {
+      setPosition({ left: `${xCoord}px`, top: `${yCoord}px` });
+      console.log(`Set initial position to: x=${xCoord}px, y=${yCoord}px`);
+    } else {
+      console.warn('Invalid or missing coordinates in hash, using fallback position.');
+      setPosition(FALLBACK_POSITION); // Use fallback if params invalid
+    }
+
+  }, []); // Empty dependency array ensures this runs only once on mount
+
+  // Example: Move to new location after 1s (for demo) - COMMENTED OUT
+  /*
   React.useEffect(() => {
     const timer = setTimeout(() => {
       setTransitioning(true);
@@ -17,6 +46,7 @@ const GhostPoint: React.FC = () => {
     }, 1000);
     return () => clearTimeout(timer);
   }, []);
+  */
 
   // Optionally, you can expose setPosition for external control
 
